@@ -1,7 +1,7 @@
 # 🎨 Protocol 12: Design Division Router & Specialization Matrix
 
 ## 1. Overview
-The global system skills directory (`/Users/mamdouhaboammar/.gemini/config/skills/`) contains 10 specialized Design Division roles (`design-*`). This protocol establishes how Antigravity routes UI/UX design, brand identity, visual storytelling, and image prompt engineering tasks across all projects.
+The global system skills directory (`~/.gemini/config/skills/`) contains 10 specialized Design Division roles (`design-*`). This protocol establishes how Antigravity routes UI/UX design, brand identity, visual storytelling, and image prompt engineering tasks across all projects.
 
 ## 2. Specialization Matrix & Role Mapping
 

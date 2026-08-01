@@ -1,7 +1,7 @@
 # 🏛️ Protocol 9: Engineering Division Router & Specialization Matrix
 
 ## 1. Overview
-The global system skills directory (`/Users/mamdouhaboammar/.gemini/config/skills/`) contains 57 specialized engineering division roles (`engineering-*`). This protocol establishes how Antigravity routes and delegates subagent tasks to the corresponding specialized role globally across all projects.
+The global system skills directory (`~/.gemini/config/skills/`) contains 57 specialized engineering division roles (`engineering-*`). This protocol establishes how Antigravity routes and delegates subagent tasks to the corresponding specialized role globally across all projects.
 
 ## 2. Specialization Matrix & Role Mapping
 

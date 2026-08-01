@@ -6,6 +6,7 @@
 [![Bun Native](https://img.shields.io/badge/Runtime-Bun-black?logo=bun)](https://bun.sh)
 [![Skills Count](https://img.shields.io/badge/Skills-91%2B%20Specialized-brightgreen)](#specialized-divisions-matrix)
 [![Auto--Injection](https://img.shields.io/badge/Auto--Injection-Zero--Prompt-orange)](#zero-prompt-auto-injection)
+[![Privacy Shield](https://img.shields.io/badge/Privacy%20Shield-Pre--Push%20Dynamizer-success)](#-privacy--path-dynamizer-shield)
 
 ---
 
@@ -30,6 +31,25 @@ npx antigravity-superpowers install
 git clone https://github.com/imMamdouhaboammar/antigravity-superpowers.git
 cd antigravity-superpowers
 bun run install.ts
+```
+
+---
+
+## 🛡️ Privacy & Path Dynamizer Shield
+
+Antigravity Superpowers includes an automatic **Privacy Path Dynamizer & Git Pre-Push Hook** to guarantee that no local machine signatures, personal home directories (e.g. `/Users/<username>/...`, `/home/<username>/...`), or local secrets ever leak when publishing to GitHub Public:
+
+- **Automatic Pre-Push Interception**: The installer configures `.git/hooks/pre-push` in target repositories.
+- **Zero Hardcoded Paths**: Automatically converts absolute machine paths into dynamic constructs (`os.homedir()`, `process.env.HOME`, `"$HOME"`, `~`).
+- **Antigravity Event Hook**: Registers in `~/.gemini/config/hooks.json` on `PreToolUse` and `SessionStart`.
+- **Manual Sanitization CLI**: Run `antigravity-superpowers sanitize` anytime to audit and convert hardcoded paths.
+
+```bash
+# Audit repository for hardcoded user paths
+bun run bin/cli.ts check-privacy
+
+# Dynamize and sanitize all local user paths
+bun run bin/cli.ts sanitize
 ```
 
 ---
@@ -59,7 +79,7 @@ bun run install.ts
                                            |
                                            v
                       +------------------------------------------+
-                      |      Zero-Prompt Auto-Injection Engine   |
+                      |  Zero-Prompt Auto-Injection & Privacy    |
                       +------------------------------------------+
 ```
 
@@ -113,7 +133,7 @@ The `antigravity-superpowers` core plugin codifies 13 binding execution rules:
 The module includes the executable `antigravity-superpowers` CLI:
 
 ```bash
-# Install plugins and skills globally & locally
+# Install plugins, skills, and privacy hooks
 bun run bin/cli.ts install
 
 # Verify system health and active skills
@@ -121,6 +141,12 @@ bun run bin/cli.ts verify
 
 # List all available skills grouped by division
 bun run bin/cli.ts list
+
+# Sanitize hardcoded paths across current repository
+bun run bin/cli.ts sanitize
+
+# Check for hardcoded local user paths (pre-push check)
+bun run bin/cli.ts check-privacy
 ```
 
 ---

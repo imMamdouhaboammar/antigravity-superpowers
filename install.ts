@@ -35,12 +35,67 @@ function copyDirRecursive(src: string, dest: string) {
   }
 }
 
+function setupGitPrePushHook(targetDir: string) {
+  const gitHooksDir = path.join(targetDir, ".git", "hooks");
+  if (!fs.existsSync(path.join(targetDir, ".git"))) return;
+
+  fs.mkdirSync(gitHooksDir, { recursive: true });
+  const hookPath = path.join(gitHooksDir, "pre-push");
+
+  const hookScript = `#!/usr/bin/env bash
+# Antigravity Privacy & Path Dynamizer Pre-Push Security Guard
+echo "🛡️ Running Antigravity Privacy & Path Dynamizer pre-push security check..."
+
+if command -v bun &> /dev/null; then
+  bun run "${path.join(targetDir, "scripts", "privacy_path_dynamizer.ts")}" --fix
+else
+  echo "⚠️ Bun runtime not detected; skipping automatic path dynamization."
+fi
+`;
+
+  fs.writeFileSync(hookPath, hookScript, "utf-8");
+  fs.chmodSync(hookPath, "755");
+  console.log(`  ${colors.green}✓ Git Pre-Push Hook installed:${colors.reset} ${hookPath}`);
+}
+
+function setupAntigravityHooksConfig(homeDir: string) {
+  const hooksJsonPath = path.join(homeDir, ".gemini", "config", "hooks.json");
+  let hooksConfig: { hooks: Array<{ name: string; events: string[]; command: string }> } = { hooks: [] };
+
+  if (fs.existsSync(hooksJsonPath)) {
+    try {
+      hooksConfig = JSON.parse(fs.readFileSync(hooksJsonPath, "utf-8"));
+    } catch (e) {
+      hooksConfig = { hooks: [] };
+    }
+  }
+
+  const dynamizerHookName = "antigravity-privacy-path-dynamizer";
+  const existingIndex = hooksConfig.hooks.findIndex((h) => h.name === dynamizerHookName);
+
+  const dynamizerHookEntry = {
+    name: dynamizerHookName,
+    events: ["PreToolUse", "SessionStart"],
+    command: `bun run ${path.join(__dirname, "scripts", "privacy_path_dynamizer.ts")} --fix`,
+  };
+
+  if (existingIndex >= 0) {
+    hooksConfig.hooks[existingIndex] = dynamizerHookEntry;
+  } else {
+    hooksConfig.hooks.push(dynamizerHookEntry);
+  }
+
+  fs.writeFileSync(hooksJsonPath, JSON.stringify(hooksConfig, null, 2) + "\n", "utf-8");
+  console.log(`  ${colors.green}✓ Antigravity Privacy Hook registered:${colors.reset} ${hooksJsonPath}`);
+}
+
 export async function installSuperpowers(options: InstallOptions = {}) {
   const rootDir = path.resolve(__dirname);
   const homeDir = os.homedir();
   const globalPluginsDir = path.join(homeDir, ".gemini", "config", "plugins");
   const globalSkillsDir = path.join(homeDir, ".gemini", "config", "skills");
-  const localAgentsSkillsDir = path.resolve(options.targetDir || process.cwd(), ".agents", "skills");
+  const currentDir = path.resolve(options.targetDir || process.cwd());
+  const localAgentsSkillsDir = path.join(currentDir, ".agents", "skills");
 
   console.log(`${colors.cyan}${colors.bright}⚡ Antigravity Superpowers Installer v1.0.0${colors.reset}\n`);
 
@@ -96,8 +151,13 @@ export async function installSuperpowers(options: InstallOptions = {}) {
     }
   }
 
+  // 4. Install Git Pre-Push Hook & Antigravity Hooks
+  console.log(`\n${colors.yellow}🛡️ Installing Privacy & Path Dynamizer Hooks...${colors.reset}`);
+  setupGitPrePushHook(currentDir);
+  setupAntigravityHooksConfig(homeDir);
+
   console.log(`\n${colors.green}${colors.bright}🎉 Antigravity Superpowers & Specialized Division Skills installed successfully!${colors.reset}`);
-  console.log(`${colors.cyan}All 91+ skills, protocols, and plugins are ready for zero-prompt auto-injection.${colors.reset}\n`);
+  console.log(`${colors.cyan}All 91+ skills, protocols, and privacy hooks are active.${colors.reset}\n`);
 }
 
 if (import.meta.main) {

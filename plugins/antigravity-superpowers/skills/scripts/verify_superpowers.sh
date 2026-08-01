@@ -29,7 +29,7 @@ else
 fi
 
 # Audit Superpowers Skill Directory
-SKILL_DIR="/Users/mamdouhaboammar/.gemini/config/skills/antigravity-superpowers"
+SKILL_DIR=""$HOME"/.gemini/config/skills/antigravity-superpowers"
 if [ -d "$SKILL_DIR/protocols" ]; then
     echo "✅ [Superpowers Protocols] Loaded successfully ($(ls -1 "$SKILL_DIR/protocols" | wc -l | tr -d ' ') protocol files)."
 else

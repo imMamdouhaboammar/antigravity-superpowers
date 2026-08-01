@@ -1,7 +1,7 @@
 # 🧪 Protocol 11: Testing & QA Division Router & Specialization Matrix
 
 ## 1. Overview
-The global system skills directory (`/Users/mamdouhaboammar/.gemini/config/skills/`) contains 9 specialized Testing & QA Division roles (`testing-*`). This protocol establishes how Antigravity routes test automation, performance benchmarking, accessibility auditing, and quality assurance tasks across all projects.
+The global system skills directory (`~/.gemini/config/skills/`) contains 9 specialized Testing & QA Division roles (`testing-*`). This protocol establishes how Antigravity routes test automation, performance benchmarking, accessibility auditing, and quality assurance tasks across all projects.
 
 ## 2. Specialization Matrix & Role Mapping
 

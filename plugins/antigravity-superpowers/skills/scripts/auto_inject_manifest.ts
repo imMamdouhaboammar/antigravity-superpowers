@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const GLOBAL_SKILLS_DIR = "/Users/mamdouhaboammar/.gemini/config/skills";
+const GLOBAL_SKILLS_DIR = "path.join(os.homedir())/.gemini/config/skills";
 
 export function auditAndInjectSystemCapabilities() {
   if (!fs.existsSync(GLOBAL_SKILLS_DIR)) {

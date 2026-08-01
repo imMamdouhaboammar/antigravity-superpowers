@@ -1,7 +1,7 @@
 # 🛡️ Protocol 10: Security Division Router & Specialization Matrix
 
 ## 1. Overview
-The global system skills directory (`/Users/mamdouhaboammar/.gemini/config/skills/`) contains 12 specialized Security Division roles (`security-*`). This protocol establishes how Antigravity routes and delegates security auditing, threat modeling, and vulnerability remediation tasks across all projects.
+The global system skills directory (`~/.gemini/config/skills/`) contains 12 specialized Security Division roles (`security-*`). This protocol establishes how Antigravity routes and delegates security auditing, threat modeling, and vulnerability remediation tasks across all projects.
 
 ## 2. Specialization Matrix & Role Mapping
 

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { installSuperpowers } from "../install.ts";
+import { scanAndDynamizePaths } from "../scripts/privacy_path_dynamizer.ts";
 
 const colors = {
   reset: "\x1b[0m",
@@ -119,15 +120,25 @@ async function main() {
     case "list":
       listSkills();
       break;
+    case "sanitize":
+    case "fix-privacy":
+      scanAndDynamizePaths({ fix: true });
+      break;
+    case "check-privacy":
+      const result = scanAndDynamizePaths({ fix: false });
+      if (result.issuesCount > 0) process.exit(1);
+      break;
     case "help":
     default:
       console.log(`Usage: antigravity-superpowers [command]
 
 Commands:
-  install     Install all plugins and skills globally and locally
-  verify      Verify system status and active skills
-  list        List all 91+ available skills by division
-  help        Display this help message
+  install        Install all plugins, skills, and privacy hooks globally and locally
+  verify         Verify system status and active skills
+  list           List all 91+ available skills by division
+  sanitize       Scan and automatically convert hardcoded local user paths to dynamic expressions
+  check-privacy  Check for hardcoded local user paths without modifying files (fails if issues found)
+  help           Display this help message
 `);
       break;
   }
