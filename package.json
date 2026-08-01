@@ -1,6 +1,6 @@
 {
   "name": "antigravity-superpowers",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Autonomous Superpowers & Specialized Division Skills for Google Antigravity, AGY 2.0, and Gemini CLI",
   "main": "install.ts",
   "module": "install.ts",
@@ -8,6 +8,14 @@
   "bin": {
     "antigravity-superpowers": "./bin/cli.ts",
     "agy-superpowers": "./bin/cli.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imMamdouhaboammar/antigravity-superpowers.git"
+  },
+  "homepage": "https://github.com/imMamdouhaboammar/antigravity-superpowers#readme",
+  "bugs": {
+    "url": "https://github.com/imMamdouhaboammar/antigravity-superpowers/issues"
   },
   "scripts": {
     "install:skills": "bun run install.ts",
@@ -28,8 +36,12 @@
   ],
   "author": "Antigravity Engineering",
   "license": "MIT",
+  "trustedDependencies": [
+    "esbuild"
+  ],
   "devDependencies": {
     "@types/node": "^22.0.0",
     "bun-types": "latest"
   }
 }
+
