@@ -6,7 +6,7 @@
 
 > **Autonomous Superpowers & Specialized Division Skills for Google Antigravity, AGY 2.0, AGY IDE, and Gemini CLI.**
 
-[![npm version](https://img.shields.io/npm/v/antigravity-superpowers.svg?color=38bdf8&style=flat-square)](https://www.npmjs.com/package/antigravity-superpowers)
+[![npm version](https://img.shields.io/npm/v/@mamdouh-aboammar/antigravity-superpowers.svg?color=38bdf8&style=flat-square)](https://www.npmjs.com/package/@mamdouh-aboammar/antigravity-superpowers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Bun Native](https://img.shields.io/badge/Runtime-Bun-black?logo=bun&style=flat-square)](https://bun.sh)
 [![Skills Count](https://img.shields.io/badge/Skills-88%2B%20Specialized-brightgreen?style=flat-square)](#-specialized-divisions-matrix-88-skills)
@@ -36,10 +36,10 @@ curl -fsSL https://raw.githubusercontent.com/imMamdouhaboammar/antigravity-super
 
 ```bash
 # Using Bun (Recommended)
-bunx antigravity-superpowers install
+bunx @mamdouh-aboammar/antigravity-superpowers install
 
 # Using npx
-npx antigravity-superpowers install
+npx @mamdouh-aboammar/antigravity-superpowers install
 ```
 
 ### Option 3: Manual Clone & Install
