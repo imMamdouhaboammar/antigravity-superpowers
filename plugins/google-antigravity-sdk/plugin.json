@@ -1,0 +1,9 @@
+{
+  "name": "google-antigravity-sdk",
+  "version": "1.0.0",
+  "description": "Google Antigravity SDK & Sitemaps Plugin for AGY 2.0, IDE, and Gemini CLI",
+  "author": {
+    "name": "Antigravity Engineering"
+  },
+  "license": "MIT"
+}

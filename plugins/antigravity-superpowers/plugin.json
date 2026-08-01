@@ -1,0 +1,20 @@
+{
+  "name": "antigravity-superpowers",
+  "version": "1.0.0",
+  "description": "Antigravity Autonomous Superpowers & Divisions Plugin - Predictive Simulation, Omniscient AST Telepathy, Self-Healing, Bun Native Orchestration, Engineering, Security, Testing & QA, and Design Divisions.",
+  "author": {
+    "name": "Antigravity Engineering"
+  },
+  "license": "MIT",
+  "keywords": [
+    "antigravity",
+    "superpowers",
+    "skills",
+    "hooks",
+    "auto-injection",
+    "engineering-division",
+    "security-division",
+    "testing-division",
+    "design-division"
+  ]
+}
