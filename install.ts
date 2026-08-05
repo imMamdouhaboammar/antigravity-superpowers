@@ -35,48 +35,84 @@ function copyDirRecursive(src: string, dest: string) {
   }
 }
 
-function setupGitPrePushHook(targetDir: string) {
-  const gitHooksDir = path.join(targetDir, ".git", "hooks");
-  if (!fs.existsSync(path.join(targetDir, ".git"))) return;
+function shellQuote(value: string) {
+  return `'${value.replace(/'/g, `'"'"'`)}'`;
+}
+
+export function setupGitPrePushHook(targetDir: string) {
+  const gitDir = path.join(targetDir, ".git");
+  const gitHooksDir = path.join(gitDir, "hooks");
+  if (!fs.existsSync(gitDir)) return false;
 
   fs.mkdirSync(gitHooksDir, { recursive: true });
   const hookPath = path.join(gitHooksDir, "pre-push");
 
+  if (fs.existsSync(hookPath)) {
+    console.warn(
+      `  ${colors.yellow}⚠ Existing Git pre-push hook preserved:${colors.reset} ${hookPath}`,
+    );
+    return false;
+  }
+
+  const scannerPath = path.join(targetDir, "scripts", "privacy_path_dynamizer.ts");
   const hookScript = `#!/usr/bin/env bash
 # Antigravity Privacy & Path Dynamizer Pre-Push Security Guard
-echo "🛡️ Running Antigravity Privacy & Path Dynamizer pre-push security check..."
+echo "🛡️ Running Antigravity privacy path pre-push check..."
 
-if command -v bun &> /dev/null; then
-  bun run "${path.join(targetDir, "scripts", "privacy_path_dynamizer.ts")}" --fix
+if command -v bun >/dev/null 2>&1; then
+  bun run ${shellQuote(scannerPath)} --check
 else
-  echo "⚠️ Bun runtime not detected; skipping automatic path dynamization."
+  echo "❌ Bun runtime not detected; privacy path check cannot run." >&2
+  exit 1
 fi
 `;
 
-  fs.writeFileSync(hookPath, hookScript, "utf-8");
+  fs.writeFileSync(hookPath, hookScript, { encoding: "utf-8", flag: "wx" });
   fs.chmodSync(hookPath, "755");
   console.log(`  ${colors.green}✓ Git Pre-Push Hook installed:${colors.reset} ${hookPath}`);
+  return true;
 }
 
-function setupAntigravityHooksConfig(homeDir: string) {
-  const hooksJsonPath = path.join(homeDir, ".gemini", "config", "hooks.json");
-  let hooksConfig: { hooks: Array<{ name: string; events: string[]; command: string }> } = { hooks: [] };
+interface HooksConfig {
+  hooks: Array<{ name: string; events: string[]; command: string }>;
+  [key: string]: unknown;
+}
 
+function parseHooksConfig(content: string, hooksJsonPath: string): HooksConfig {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    throw new Error(`Refusing to overwrite invalid hooks configuration: ${hooksJsonPath}`);
+  }
+
+  if (
+    typeof parsed !== "object" ||
+    parsed === null ||
+    !Array.isArray((parsed as { hooks?: unknown }).hooks)
+  ) {
+    throw new Error(`Refusing to overwrite unsupported hooks configuration: ${hooksJsonPath}`);
+  }
+
+  return parsed as HooksConfig;
+}
+
+export function setupAntigravityHooksConfig(homeDir: string) {
+  const hooksJsonPath = path.join(homeDir, ".gemini", "config", "hooks.json");
+  const hooksDir = path.dirname(hooksJsonPath);
+  fs.mkdirSync(hooksDir, { recursive: true });
+
+  let hooksConfig: HooksConfig = { hooks: [] };
   if (fs.existsSync(hooksJsonPath)) {
-    try {
-      hooksConfig = JSON.parse(fs.readFileSync(hooksJsonPath, "utf-8"));
-    } catch (e) {
-      hooksConfig = { hooks: [] };
-    }
+    hooksConfig = parseHooksConfig(fs.readFileSync(hooksJsonPath, "utf-8"), hooksJsonPath);
   }
 
   const dynamizerHookName = "antigravity-privacy-path-dynamizer";
-  const existingIndex = hooksConfig.hooks.findIndex((h) => h.name === dynamizerHookName);
-
+  const existingIndex = hooksConfig.hooks.findIndex((hook) => hook.name === dynamizerHookName);
   const dynamizerHookEntry = {
     name: dynamizerHookName,
     events: ["PreToolUse", "SessionStart"],
-    command: `bun run ${path.join(__dirname, "scripts", "privacy_path_dynamizer.ts")} --fix`,
+    command: `bun run ${shellQuote(path.join(__dirname, "scripts", "privacy_path_dynamizer.ts"))} --check`,
   };
 
   if (existingIndex >= 0) {
@@ -85,7 +121,12 @@ function setupAntigravityHooksConfig(homeDir: string) {
     hooksConfig.hooks.push(dynamizerHookEntry);
   }
 
-  fs.writeFileSync(hooksJsonPath, JSON.stringify(hooksConfig, null, 2) + "\n", "utf-8");
+  const temporaryPath = `${hooksJsonPath}.tmp-${process.pid}`;
+  fs.writeFileSync(temporaryPath, JSON.stringify(hooksConfig, null, 2) + "\n", {
+    encoding: "utf-8",
+    flag: "wx",
+  });
+  fs.renameSync(temporaryPath, hooksJsonPath);
   console.log(`  ${colors.green}✓ Antigravity Privacy Hook registered:${colors.reset} ${hooksJsonPath}`);
 }
 
@@ -99,7 +140,6 @@ export async function installSuperpowers(options: InstallOptions = {}) {
 
   console.log(`${colors.cyan}${colors.bright}⚡ Antigravity Superpowers Installer v1.0.0${colors.reset}\n`);
 
-  // 1. Install Plugins Globally (~/.gemini/config/plugins/)
   console.log(`${colors.yellow}📦 Installing Antigravity Plugins...${colors.reset}`);
   const srcPluginsDir = path.join(rootDir, "plugins");
 
@@ -115,7 +155,6 @@ export async function installSuperpowers(options: InstallOptions = {}) {
     }
   }
 
-  // 2. Install Skills Globally (~/.gemini/config/skills/)
   console.log(`\n${colors.yellow}🧠 Installing Skills Globally (~/.gemini/config/skills/)...${colors.reset}`);
   const srcSkillsDir = path.join(rootDir, "skills");
   let installedGlobalCount = 0;
@@ -133,7 +172,6 @@ export async function installSuperpowers(options: InstallOptions = {}) {
     console.log(`  ${colors.green}✓ ${installedGlobalCount} Skills installed globally.${colors.reset}`);
   }
 
-  // 3. Install Skills to Project Local (.agents/skills/)
   if (options.project !== false) {
     console.log(`\n${colors.yellow}🎯 Syncing Skills to Local Workspace (${localAgentsSkillsDir})...${colors.reset}`);
     let installedProjectCount = 0;
@@ -151,7 +189,6 @@ export async function installSuperpowers(options: InstallOptions = {}) {
     }
   }
 
-  // 4. Install Git Pre-Push Hook & Antigravity Hooks
   console.log(`\n${colors.yellow}🛡️ Installing Privacy & Path Dynamizer Hooks...${colors.reset}`);
   setupGitPrePushHook(currentDir);
   setupAntigravityHooksConfig(homeDir);
