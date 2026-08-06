@@ -57,6 +57,51 @@ describe("scanAndDynamizePaths", () => {
     expect(JSON.parse(fs.readFileSync(filePath, "utf-8"))).toEqual({ workspace: "~/repo" });
   });
 
+  test("does not replace a home path that is only a directory-name prefix", () => {
+    const root = createTempDir();
+    const homeDir = "/home/private-user";
+    const filePath = path.join(root, "config.txt");
+    fs.writeFileSync(filePath, `${homeDir}2/repository`);
+
+    const result = scanAndDynamizePaths({
+      targetDir: root,
+      homeDir,
+      username: "private-user",
+      fix: true,
+      log: () => {},
+    });
+
+    expect(result.issuesCount).toBe(0);
+    expect(result.fixedCount).toBe(0);
+    expect(fs.readFileSync(filePath, "utf-8")).toBe(`${homeDir}2/repository`);
+  });
+
+  test("scans ordinary logs and brain directories but skips scoped Antigravity state", () => {
+    const root = createTempDir();
+    const homeDir = "/home/private-user";
+    const logsDir = path.join(root, "logs");
+    const brainDir = path.join(root, "brain");
+    const scopedStateDir = path.join(root, ".gemini", "antigravity", "logs");
+    fs.mkdirSync(logsDir, { recursive: true });
+    fs.mkdirSync(brainDir, { recursive: true });
+    fs.mkdirSync(scopedStateDir, { recursive: true });
+    fs.writeFileSync(path.join(logsDir, "app.txt"), `${homeDir}/logs`);
+    fs.writeFileSync(path.join(brainDir, "notes.txt"), `${homeDir}/brain`);
+    fs.writeFileSync(path.join(scopedStateDir, "session.txt"), `${homeDir}/state`);
+
+    const result = scanAndDynamizePaths({
+      targetDir: root,
+      homeDir,
+      username: "private-user",
+      log: () => {},
+    });
+
+    expect(result.flaggedFiles).toEqual([
+      { file: path.join("brain", "notes.txt"), line: 1 },
+      { file: path.join("logs", "app.txt"), line: 1 },
+    ]);
+  });
+
   test("skips symlinks and binary files", () => {
     const root = createTempDir();
     const outside = createTempDir();
