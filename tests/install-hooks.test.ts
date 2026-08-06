@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -32,6 +32,28 @@ describe("setupGitPrePushHook", () => {
 
     expect(setupGitPrePushHook(project)).toBe(false);
     expect(fs.readFileSync(hookPath, "utf-8")).toBe(existingHook);
+  });
+
+  test("treats a concurrent hook creation as preservation", () => {
+    const project = makeTemporaryDirectory();
+    fs.mkdirSync(path.join(project, ".git"), { recursive: true });
+    const originalWriteFileSync = fs.writeFileSync.bind(fs);
+    const hookPath = path.join(project, ".git", "hooks", "pre-push");
+    const concurrentHook = "#!/bin/sh\necho concurrent\n";
+
+    const writeSpy = spyOn(fs, "writeFileSync").mockImplementationOnce((file, data, options) => {
+      originalWriteFileSync(hookPath, concurrentHook);
+      const error = new Error("file already exists") as NodeJS.ErrnoException;
+      error.code = "EEXIST";
+      throw error;
+    });
+
+    try {
+      expect(setupGitPrePushHook(project)).toBe(false);
+      expect(fs.readFileSync(hookPath, "utf-8")).toBe(concurrentHook);
+    } finally {
+      writeSpy.mockRestore();
+    }
   });
 
   test("installs a non-mutating, quoted privacy check", () => {
@@ -69,6 +91,22 @@ describe("setupAntigravityHooksConfig", () => {
     );
     expect(privacyHook.command).toContain(" --check");
     expect(privacyHook.command).not.toContain(" --fix");
+  });
+
+  test("removes temporary configuration files when atomic replacement fails", () => {
+    const home = makeTemporaryDirectory();
+    const hooksDirectory = path.join(home, ".gemini", "config");
+    fs.mkdirSync(hooksDirectory, { recursive: true });
+    const renameSpy = spyOn(fs, "renameSync").mockImplementationOnce(() => {
+      throw new Error("simulated rename failure");
+    });
+
+    try {
+      expect(() => setupAntigravityHooksConfig(home)).toThrow("simulated rename failure");
+      expect(fs.readdirSync(hooksDirectory).filter((entry) => entry.includes(".tmp-"))).toEqual([]);
+    } finally {
+      renameSpy.mockRestore();
+    }
   });
 
   test("fails safely instead of overwriting invalid JSON", () => {
