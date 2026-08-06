@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import { randomUUID } from "node:crypto";
 
 export interface InstallOptions {
   global?: boolean;
@@ -39,6 +40,16 @@ function shellQuote(value: string) {
   return `'${value.replace(/'/g, `'"'"'`)}'`;
 }
 
+function warnExistingHook(hookPath: string) {
+  console.warn(
+    `  ${colors.yellow}⚠ Existing Git pre-push hook preserved:${colors.reset} ${hookPath}`,
+  );
+}
+
+function isAlreadyExistsError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && (error as NodeJS.ErrnoException).code === "EEXIST";
+}
+
 export function setupGitPrePushHook(targetDir: string) {
   const gitDir = path.join(targetDir, ".git");
   const gitHooksDir = path.join(gitDir, "hooks");
@@ -48,9 +59,7 @@ export function setupGitPrePushHook(targetDir: string) {
   const hookPath = path.join(gitHooksDir, "pre-push");
 
   if (fs.existsSync(hookPath)) {
-    console.warn(
-      `  ${colors.yellow}⚠ Existing Git pre-push hook preserved:${colors.reset} ${hookPath}`,
-    );
+    warnExistingHook(hookPath);
     return false;
   }
 
@@ -67,7 +76,16 @@ else
 fi
 `;
 
-  fs.writeFileSync(hookPath, hookScript, { encoding: "utf-8", flag: "wx" });
+  try {
+    fs.writeFileSync(hookPath, hookScript, { encoding: "utf-8", flag: "wx" });
+  } catch (error) {
+    if (isAlreadyExistsError(error)) {
+      warnExistingHook(hookPath);
+      return false;
+    }
+    throw error;
+  }
+
   fs.chmodSync(hookPath, "755");
   console.log(`  ${colors.green}✓ Git Pre-Push Hook installed:${colors.reset} ${hookPath}`);
   return true;
@@ -121,12 +139,19 @@ export function setupAntigravityHooksConfig(homeDir: string) {
     hooksConfig.hooks.push(dynamizerHookEntry);
   }
 
-  const temporaryPath = `${hooksJsonPath}.tmp-${process.pid}`;
-  fs.writeFileSync(temporaryPath, JSON.stringify(hooksConfig, null, 2) + "\n", {
-    encoding: "utf-8",
-    flag: "wx",
-  });
-  fs.renameSync(temporaryPath, hooksJsonPath);
+  const temporaryPath = `${hooksJsonPath}.tmp-${process.pid}-${randomUUID()}`;
+  try {
+    fs.writeFileSync(temporaryPath, JSON.stringify(hooksConfig, null, 2) + "\n", {
+      encoding: "utf-8",
+      flag: "wx",
+    });
+    fs.renameSync(temporaryPath, hooksJsonPath);
+  } finally {
+    if (fs.existsSync(temporaryPath)) {
+      fs.unlinkSync(temporaryPath);
+    }
+  }
+
   console.log(`  ${colors.green}✓ Antigravity Privacy Hook registered:${colors.reset} ${hooksJsonPath}`);
 }
 
