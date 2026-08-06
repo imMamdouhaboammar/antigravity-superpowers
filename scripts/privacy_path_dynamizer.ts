@@ -32,8 +32,11 @@ const IGNORE_DIRS = new Set([
   "build",
   ".next",
   "coverage",
-  "brain",
-  "logs",
+]);
+
+const SCOPED_IGNORE_DIRS = new Set([
+  ".gemini/antigravity/brain",
+  ".gemini/antigravity/logs",
 ]);
 
 const IGNORE_FILES = new Set([
@@ -77,7 +80,7 @@ export function scanAndDynamizePaths(options: ScanOptions = {}) {
     return { issuesCount: 0, fixedCount: 0, flaggedFiles: [] as FlaggedFile[] };
   }
 
-  const homeRegex = new RegExp(escapeRegExp(homeDir), "g");
+  const homeRegex = new RegExp(`${escapeRegExp(homeDir)}(?=$|[/\\\\])`, "g");
   const userPathRegex = new RegExp(
     `(?:/Users|/home)/${escapeRegExp(username)}(?=$|[/\\\\])`,
     "g",
@@ -141,8 +144,9 @@ export function scanAndDynamizePaths(options: ScanOptions = {}) {
     }
 
     for (const entry of entries) {
-      if (IGNORE_DIRS.has(entry.name)) continue;
       const fullPath = path.join(dir, entry.name);
+      const relativePath = path.relative(targetDir, fullPath).split(path.sep).join("/");
+      if (IGNORE_DIRS.has(entry.name) || SCOPED_IGNORE_DIRS.has(relativePath)) continue;
       if (entry.isSymbolicLink()) continue;
       if (entry.isDirectory()) walkDir(fullPath);
       else if (entry.isFile()) processFile(fullPath);
