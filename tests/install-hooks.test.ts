@@ -72,7 +72,22 @@ describe("setupGitPrePushHook", () => {
 });
 
 describe("setupAntigravityHooksConfig", () => {
-  test("creates missing parent directories and preserves unrelated hooks", () => {
+  test("creates missing parent directories", () => {
+    const home = makeTemporaryDirectory();
+    const hooksPath = path.join(home, ".gemini", "config", "hooks.json");
+
+    setupAntigravityHooksConfig(home);
+
+    expect(fs.existsSync(hooksPath)).toBe(true);
+    const config = JSON.parse(fs.readFileSync(hooksPath, "utf-8"));
+    expect(
+      config.hooks.find(
+        (hook: { name: string }) => hook.name === "antigravity-privacy-path-dynamizer",
+      ),
+    ).toBeDefined();
+  });
+
+  test("preserves unrelated hooks and top-level configuration", () => {
     const home = makeTemporaryDirectory();
     const hooksPath = path.join(home, ".gemini", "config", "hooks.json");
     fs.mkdirSync(path.dirname(hooksPath), { recursive: true });
@@ -91,6 +106,19 @@ describe("setupAntigravityHooksConfig", () => {
     );
     expect(privacyHook.command).toContain(" --check");
     expect(privacyHook.command).not.toContain(" --fix");
+  });
+
+  test("rejects malformed hook entries without modifying configuration", () => {
+    const home = makeTemporaryDirectory();
+    const hooksPath = path.join(home, ".gemini", "config", "hooks.json");
+    fs.mkdirSync(path.dirname(hooksPath), { recursive: true });
+    const malformedConfig = JSON.stringify({ hooks: [null], custom: true });
+    fs.writeFileSync(hooksPath, malformedConfig);
+
+    expect(() => setupAntigravityHooksConfig(home)).toThrow(
+      "Refusing to overwrite unsupported hooks configuration",
+    );
+    expect(fs.readFileSync(hooksPath, "utf-8")).toBe(malformedConfig);
   });
 
   test("removes temporary configuration files when atomic replacement fails", () => {
