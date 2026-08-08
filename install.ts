@@ -107,7 +107,13 @@ function parseHooksConfig(content: string, hooksJsonPath: string): HooksConfig {
   if (
     typeof parsed !== "object" ||
     parsed === null ||
-    !Array.isArray((parsed as { hooks?: unknown }).hooks)
+    !Array.isArray((parsed as { hooks?: unknown }).hooks) ||
+    !(parsed as { hooks: unknown[] }).hooks.every(
+      (hook) =>
+        typeof hook === "object" &&
+        hook !== null &&
+        typeof (hook as { name?: unknown }).name === "string",
+    )
   ) {
     throw new Error(`Refusing to overwrite unsupported hooks configuration: ${hooksJsonPath}`);
   }
