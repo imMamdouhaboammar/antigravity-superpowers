@@ -6,7 +6,12 @@ export interface RoutingDecision {
   reasons: string[];
 }
 
-const includesAny = (text: string, terms: string[]) => terms.some((term) => text.includes(term));
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const matchesTerm = (text: string, term: string) => {
+  const escaped = escapeRegExp(term);
+  return new RegExp(`(?:^|[^a-z0-9])${escaped}(?:$|[^a-z0-9])`, "i").test(text);
+};
+const includesAny = (text: string, terms: string[]) => terms.some((term) => matchesTerm(text, term));
 
 const SECURITY_TERMS = [
   "security",
@@ -33,9 +38,11 @@ const MAJOR_FEATURE_TERMS = [
   "end-to-end",
   "enterprise grade",
 ];
-const FRONTEND_TERMS = ["frontend", "react", "next.js", "nextjs", "vue", "angular", "component", "ui"];
+const FRONTEND_TERMS = ["frontend", "react", "next.js", "nextjs", "vue", "angular", "ui"];
 const DESIGN_TERMS = ["ux", "visual design", "design system", "wireframe", "layout", "branding"];
 const DOC_ONLY_TERMS = ["readme", "documentation", "docs", "typo", "spelling", "copy edit"];
+const READ_ONLY_REVIEW_TERMS = ["review", "audit", "analyze", "analyse", "assess", "inspect"];
+const MUTATION_TERMS = ["fix", "change", "implement", "build", "add", "remove", "update", "refactor", "migrate", "write"];
 
 function unique(items: string[]): string[] {
   return [...new Set(items)];
@@ -52,12 +59,9 @@ export function routeTask(input: string): RoutingDecision {
     };
   }
 
-  const securitySensitive = includesAny(text, SECURITY_TERMS);
   const debugging = includesAny(text, DEBUG_TERMS);
   const majorFeature = includesAny(text, MAJOR_FEATURE_TERMS);
-  const frontend = includesAny(text, FRONTEND_TERMS);
-  const design = includesAny(text, DESIGN_TERMS);
-  const docsOnly = includesAny(text, DOC_ONLY_TERMS) && !debugging && !majorFeature && !securitySensitive;
+  const docsOnly = includesAny(text, DOC_ONLY_TERMS) && !debugging && !majorFeature;
 
   if (docsOnly) {
     return {
@@ -67,6 +71,11 @@ export function routeTask(input: string): RoutingDecision {
     };
   }
 
+  const securitySensitive = includesAny(text, SECURITY_TERMS);
+  const frontend = includesAny(text, FRONTEND_TERMS);
+  const design = includesAny(text, DESIGN_TERMS);
+  const readOnlyReview = includesAny(text, READ_ONLY_REVIEW_TERMS) && !includesAny(text, MUTATION_TERMS) && !debugging;
+
   const skills: string[] = [];
   const reasons: string[] = [];
 
@@ -75,7 +84,9 @@ export function routeTask(input: string): RoutingDecision {
     reasons.push("Security-sensitive language requires an explicit AppSec review path.");
   }
 
-  if (majorFeature) {
+  if (securitySensitive && readOnlyReview && !majorFeature) {
+    reasons.push("Read-only security review: no implementation specialist is needed.");
+  } else if (majorFeature) {
     skills.push("engineering-software-architect", "engineering-senior-developer");
     reasons.push("Large implementation scope requires architecture before implementation.");
   } else if (frontend) {
@@ -94,12 +105,13 @@ export function routeTask(input: string): RoutingDecision {
     reasons.push("UI implementation explicitly includes design or UX work.");
   }
 
-  if (debugging || majorFeature || securitySensitive) {
+  const codeChangeLikely = !readOnlyReview || debugging || majorFeature;
+  if ((debugging || majorFeature || securitySensitive) && codeChangeLikely) {
     skills.push("testing-test-automation-engineer");
     reasons.push("Non-trivial or risky code changes require targeted verification.");
   }
 
-  if (majorFeature || securitySensitive) {
+  if (majorFeature || (securitySensitive && codeChangeLikely)) {
     skills.push("engineering-code-reviewer");
     reasons.push("Complex or sensitive changes require independent code review.");
   }
