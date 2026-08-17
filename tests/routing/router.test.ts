@@ -10,6 +10,18 @@ describe("routeTask", () => {
     });
   });
 
+  test("does not over-route security words inside documentation-only tasks", () => {
+    const decision = routeTask("Fix typo in security documentation");
+    expect(decision.skills).toEqual(["engineering-minimal-change-engineer"]);
+    expect(decision.complexity).toBe("trivial");
+  });
+
+  test("does not match auth inside unrelated words such as author", () => {
+    const decision = routeTask("Update author bio copy");
+    expect(decision.skills).toEqual(["engineering-minimal-change-engineer"]);
+    expect(decision.skills).not.toContain("security-appsec-engineer");
+  });
+
   test("routes failing tests to debugging and test verification", () => {
     const decision = routeTask("Debug failing test in the installer");
     expect(decision.complexity).toBe("standard");
@@ -36,6 +48,12 @@ describe("routeTask", () => {
     expect(decision.skills).toContain("security-appsec-engineer");
     expect(decision.skills).toContain("testing-test-automation-engineer");
     expect(decision.skills).toContain("engineering-code-reviewer");
+  });
+
+  test("keeps read-only security audits focused", () => {
+    const decision = routeTask("Audit OAuth permission handling for security issues");
+    expect(decision.complexity).toBe("high-risk");
+    expect(decision.skills).toEqual(["security-appsec-engineer"]);
   });
 
   test("does not add design specialists to plain frontend implementation", () => {
