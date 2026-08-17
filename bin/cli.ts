@@ -15,133 +15,105 @@ const colors = {
 };
 
 function printBanner() {
-  console.log(`
-${colors.cyan}${colors.bright}
-   _   _  _ _____ ___  ___  ___    _  _   _____ _____   __
-  /_\\ | \\| |_   _|_ _|/ __|/ _ \\  /_\\| | / /_ _|_   _| /  \\
- / _ \\| .\` | | |  | || (_ | (_) |/ _ \\ |/ / | |  | |  | () |
-/_/ \\_\\_|\\_| |_| |___|\\___|\\___//_/ \\_\\___/ |___| |_|   \\__/
-${colors.reset}
-${colors.yellow}   Autonomous Superpowers & Specialized Division Skills for Antigravity ${colors.reset}
-`);
+  console.log(`\n${colors.cyan}${colors.bright}Antigravity Superpowers${colors.reset}\n${colors.yellow}Autonomous Superpowers & Specialized Division Skills for Antigravity${colors.reset}\n`);
+}
+
+export function inspectInstallation(homeDir = os.homedir()) {
+  const globalPluginsDir = path.join(homeDir, ".gemini", "config", "plugins");
+  const globalSkillsDir = path.join(homeDir, ".gemini", "config", "skills");
+  const requiredPlugins = ["antigravity-superpowers", "antigravity-divisions", "google-antigravity-sdk"];
+  const requiredSkills = [
+    "antigravity-superpowers",
+    "antigravity-guide",
+    "google-antigravity-sdk",
+    "engineering-software-architect",
+    "engineering-senior-developer",
+    "engineering-code-reviewer",
+    "engineering-minimal-change-engineer",
+    "security-appsec-engineer",
+    "security-secrets-credential-engineer",
+    "testing-test-automation-engineer",
+    "testing-reality-checker",
+  ];
+
+  const missingPlugins = requiredPlugins.filter((name) => !fs.existsSync(path.join(globalPluginsDir, name)));
+  const missingSkills = requiredSkills.filter((name) => !fs.existsSync(path.join(globalSkillsDir, name, "SKILL.md")));
+  const skillCount = fs.existsSync(globalSkillsDir)
+    ? fs.readdirSync(globalSkillsDir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).length
+    : 0;
+
+  return { globalPluginsDir, globalSkillsDir, requiredPlugins, requiredSkills, missingPlugins, missingSkills, skillCount };
 }
 
 function verifyInstallation() {
-  console.log(`${colors.yellow}🔍 Verifying Antigravity Superpowers Installation...${colors.reset}\n`);
+  console.log(`${colors.yellow}Verifying Antigravity Superpowers installation...${colors.reset}\n`);
+  const report = inspectInstallation();
 
-  const homeDir = os.homedir();
-  const globalPluginsDir = path.join(homeDir, ".gemini", "config", "plugins");
-  const globalSkillsDir = path.join(homeDir, ".gemini", "config", "skills");
-
-  const requiredPlugins = ["antigravity-superpowers", "antigravity-divisions", "google-antigravity-sdk"];
-  let pluginOk = 0;
-
-  for (const plugin of requiredPlugins) {
-    const pPath = path.join(globalPluginsDir, plugin);
-    if (fs.existsSync(pPath)) {
-      console.log(`  ${colors.green}✓ Plugin verified:${colors.reset} ${plugin}`);
-      pluginOk++;
-    } else {
-      console.log(`  ${colors.red}✗ Plugin missing:${colors.reset} ${plugin}`);
-    }
+  for (const plugin of report.requiredPlugins) {
+    const missing = report.missingPlugins.includes(plugin);
+    console.log(`  ${missing ? colors.red + "x" : colors.green + "✓"}${colors.reset} Plugin: ${plugin}`);
+  }
+  for (const skill of report.requiredSkills) {
+    const missing = report.missingSkills.includes(skill);
+    console.log(`  ${missing ? colors.red + "x" : colors.green + "✓"}${colors.reset} Required skill: ${skill}`);
   }
 
-  let skillCount = 0;
-  if (fs.existsSync(globalSkillsDir)) {
-    const entries = fs.readdirSync(globalSkillsDir, { withFileTypes: true });
-    skillCount = entries.filter((e) => e.isDirectory()).length;
+  console.log(`\n  ${report.skillCount} skill directories detected in ${report.globalSkillsDir}`);
+  if (report.missingPlugins.length === 0 && report.missingSkills.length === 0) {
+    console.log(`\n${colors.green}${colors.bright}STATUS: Healthy. Required plugins and baseline capabilities are present.${colors.reset}\n`);
+    return true;
   }
 
-  console.log(`\n  ${colors.green}✓ ${skillCount} Global Skills detected in ~/.gemini/config/skills/${colors.reset}`);
-
-  if (pluginOk === requiredPlugins.length && skillCount >= 80) {
-    console.log(`\n${colors.green}${colors.bright}✅ STATUS: Perfect! All Antigravity Superpowers & Division Skills are fully active.${colors.reset}\n`);
-  } else {
-    console.log(`\n${colors.yellow}⚠️ STATUS: Partial installation detected. Run 'antigravity-superpowers install' to fix.${colors.reset}\n`);
-  }
+  console.log(`\n${colors.red}STATUS: Incomplete installation.${colors.reset}`);
+  if (report.missingPlugins.length) console.log(`Missing plugins: ${report.missingPlugins.join(", ")}`);
+  if (report.missingSkills.length) console.log(`Missing skills: ${report.missingSkills.join(", ")}`);
+  console.log(`Run 'antigravity-superpowers install' to repair.\n`);
+  return false;
 }
 
 function listSkills() {
   const rootDir = path.resolve(__dirname, "..");
   const skillsDir = path.join(rootDir, "skills");
-
-  console.log(`${colors.yellow}📋 Listing All Available Antigravity Superpowers & Division Skills:${colors.reset}\n`);
-
   if (!fs.existsSync(skillsDir)) {
-    console.log(`${colors.red}Skills directory not found. Run 'bun run scripts/setup.ts' first.${colors.reset}`);
+    console.log(`${colors.red}Skills directory not found.${colors.reset}`);
     return;
   }
-
-  const entries = fs.readdirSync(skillsDir, { withFileTypes: true });
-  const skills = entries.filter((e) => e.isDirectory()).map((e) => e.name);
-
-  const categories: Record<string, string[]> = {
-    "⚡ Core Superpowers": [],
-    "💻 Engineering Division": [],
-    "🛡️ Security Division": [],
-    "🧪 Testing & QA Division": [],
-    "🎨 Design Division": [],
-    "📚 Guides & SDK": [],
-    "📦 Other": [],
-  };
-
+  const skills = fs.readdirSync(skillsDir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort();
+  const categories: Record<string, string[]> = { Core: [], Engineering: [], Security: [], Testing: [], Design: [], Guides: [], Other: [] };
   for (const skill of skills) {
-    if (skill.startsWith("engineering-")) categories["💻 Engineering Division"].push(skill);
-    else if (skill.startsWith("security-")) categories["🛡️ Security Division"].push(skill);
-    else if (skill.startsWith("testing-")) categories["🧪 Testing & QA Division"].push(skill);
-    else if (skill.startsWith("design-")) categories["🎨 Design Division"].push(skill);
-    else if (skill === "antigravity-superpowers") categories["⚡ Core Superpowers"].push(skill);
-    else if (skill.includes("sdk") || skill.includes("guide")) categories["📚 Guides & SDK"].push(skill);
-    else categories["📦 Other"].push(skill);
+    if (skill.startsWith("engineering-")) categories.Engineering.push(skill);
+    else if (skill.startsWith("security-")) categories.Security.push(skill);
+    else if (skill.startsWith("testing-")) categories.Testing.push(skill);
+    else if (skill.startsWith("design-")) categories.Design.push(skill);
+    else if (skill === "antigravity-superpowers") categories.Core.push(skill);
+    else if (skill.includes("sdk") || skill.includes("guide")) categories.Guides.push(skill);
+    else categories.Other.push(skill);
   }
-
-  for (const [cat, items] of Object.entries(categories)) {
-    if (items.length > 0) {
-      console.log(`${colors.cyan}${cat} (${items.length}):${colors.reset}`);
-      console.log(`  ${items.join(", ")}\n`);
-    }
+  for (const [category, items] of Object.entries(categories)) {
+    if (items.length) console.log(`${colors.cyan}${category} (${items.length})${colors.reset}\n  ${items.join(", ")}\n`);
   }
-
-  console.log(`${colors.green}Total Skills Available: ${skills.length}${colors.reset}\n`);
+  console.log(`${colors.green}Total skills: ${skills.length}${colors.reset}\n`);
 }
 
 async function main() {
   printBanner();
   const command = process.argv[2] || "install";
-
   switch (command) {
-    case "install":
-      await installSuperpowers();
-      break;
+    case "install": await installSuperpowers(); break;
     case "verify":
-    case "status":
-      verifyInstallation();
-      break;
-    case "list":
-      listSkills();
-      break;
+    case "status": if (!verifyInstallation()) process.exitCode = 1; break;
+    case "list": listSkills(); break;
     case "sanitize":
-    case "fix-privacy":
-      scanAndDynamizePaths({ fix: true });
-      break;
-    case "check-privacy":
+    case "fix-privacy": scanAndDynamizePaths({ fix: true }); break;
+    case "check-privacy": {
       const result = scanAndDynamizePaths({ fix: false });
-      if (result.issuesCount > 0) process.exit(1);
+      if (result.issuesCount > 0) process.exitCode = 1;
       break;
+    }
     case "help":
     default:
-      console.log(`Usage: antigravity-superpowers [command]
-
-Commands:
-  install        Install all plugins, skills, and privacy hooks globally and locally
-  verify         Verify system status and active skills
-  list           List all 91+ available skills by division
-  sanitize       Scan and automatically convert hardcoded local user paths to dynamic expressions
-  check-privacy  Check for hardcoded local user paths without modifying files (fails if issues found)
-  help           Display this help message
-`);
-      break;
+      console.log(`Usage: antigravity-superpowers [command]\n\nCommands:\n  install        Install plugins, skills, and privacy hooks\n  verify         Verify required plugins and baseline capabilities\n  status         Alias for verify\n  list           List available skills by division\n  sanitize       Replace hardcoded local user paths with dynamic expressions\n  check-privacy  Check hardcoded local user paths without modifying files\n  help           Display this help message\n`);
   }
 }
 
-main().catch(console.error);
+if (import.meta.main) main().catch((error) => { console.error(error); process.exitCode = 1; });
