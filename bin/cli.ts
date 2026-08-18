@@ -19,69 +19,85 @@ const colors = {
   cyan: "\x1b[36m",
 };
 
-function getGlobalGeminiDir(): string {
-  return path.join(os.homedir(), ".gemini");
+function printBanner() {
+  console.log(`\n${colors.cyan}${colors.bright}Antigravity Superpowers${colors.reset}\n${colors.yellow}Autonomous Superpowers & Specialized Division Skills for Antigravity${colors.reset}\n`);
+}
+
+export function inspectInstallation(homeDir = os.homedir()) {
+  const globalPluginsDir = path.join(homeDir, ".gemini", "config", "plugins");
+  const globalSkillsDir = path.join(homeDir, ".gemini", "config", "skills");
+  const requiredPlugins = ["antigravity-superpowers", "antigravity-divisions", "google-antigravity-sdk"];
+  const requiredSkills = [
+    "antigravity-superpowers",
+    "antigravity-guide",
+    "google-antigravity-sdk",
+    "engineering-software-architect",
+    "engineering-senior-developer",
+    "engineering-code-reviewer",
+    "engineering-minimal-change-engineer",
+    "security-appsec-engineer",
+    "security-secrets-credential-engineer",
+    "testing-test-automation-engineer",
+    "testing-reality-checker",
+  ];
+
+  const missingPlugins = requiredPlugins.filter((name) => !fs.existsSync(path.join(globalPluginsDir, name)));
+  const missingSkills = requiredSkills.filter((name) => !fs.existsSync(path.join(globalSkillsDir, name, "SKILL.md")));
+  const skillCount = fs.existsSync(globalSkillsDir)
+    ? fs.readdirSync(globalSkillsDir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).length
+    : 0;
+
+  return { globalPluginsDir, globalSkillsDir, requiredPlugins, requiredSkills, missingPlugins, missingSkills, skillCount };
 }
 
 function verifyInstallation() {
-  console.log(`\n${colors.magenta}${colors.bright}⚡ ANTIGRAVITY SUPERPOWERS STATUS${colors.reset}\n`);
+  console.log(`${colors.yellow}Verifying Antigravity Superpowers installation...${colors.reset}\n`);
+  const report = inspectInstallation();
 
-  const globalGeminiDir = getGlobalGeminiDir();
-  const checks = [
-    {
-      name: "Superpowers Plugin",
-      path: path.join(globalGeminiDir, "extensions", "superpowers"),
-    },
-    {
-      name: "Specialized Divisions",
-      path: path.join(globalGeminiDir, "skills", "specialized-divisions"),
-    },
-    {
-      name: "Privacy Path Dynamizer",
-      path: path.join(globalGeminiDir, "antigravity", "scripts", "privacy_path_dynamizer.ts"),
-    },
-    {
-      name: "Global Hook Configuration",
-      path: path.join(globalGeminiDir, "antigravity", "hooks.json"),
-    },
-  ];
-
-  let allPassed = true;
-  for (const check of checks) {
-    const exists = fs.existsSync(check.path);
-    if (!exists) allPassed = false;
-    console.log(
-      `${exists ? colors.green + "✓" : colors.red + "✗"}${colors.reset} ${check.name}`,
-    );
+  for (const plugin of report.requiredPlugins) {
+    const missing = report.missingPlugins.includes(plugin);
+    console.log(`  ${missing ? colors.red + "x" : colors.green + "✓"}${colors.reset} Plugin: ${plugin}`);
+  }
+  for (const skill of report.requiredSkills) {
+    const missing = report.missingSkills.includes(skill);
+    console.log(`  ${missing ? colors.red + "x" : colors.green + "✓"}${colors.reset} Required skill: ${skill}`);
   }
 
-  console.log("");
-  if (allPassed) {
-    console.log(`${colors.green}${colors.bright}All systems operational.${colors.reset}`);
-  } else {
-    console.log(
-      `${colors.yellow}Some components are missing. Run 'antigravity-superpowers install'.${colors.reset}`,
-    );
+  console.log(`\n  ${report.skillCount} skill directories detected in ${report.globalSkillsDir}`);
+  if (report.missingPlugins.length === 0 && report.missingSkills.length === 0) {
+    console.log(`\n${colors.green}${colors.bright}STATUS: Healthy. Required plugins and baseline capabilities are present.${colors.reset}\n`);
+    return true;
   }
+
+  console.log(`\n${colors.red}STATUS: Incomplete installation.${colors.reset}`);
+  if (report.missingPlugins.length) console.log(`Missing plugins: ${report.missingPlugins.join(", ")}`);
+  if (report.missingSkills.length) console.log(`Missing skills: ${report.missingSkills.join(", ")}`);
+  console.log(`Run 'antigravity-superpowers install' to repair.\n`);
+  return false;
 }
 
 function listSkills() {
-  console.log(`\n${colors.cyan}${colors.bright}Available Specialized Divisions${colors.reset}\n`);
-  const divisions = [
-    ["Engineering", "22 skills"],
-    ["Security", "14 skills"],
-    ["Testing & QA", "13 skills"],
-    ["Design", "12 skills"],
-    ["Product", "10 skills"],
-    ["Data & AI", "9 skills"],
-    ["Leadership", "7 skills"],
-    ["Business", "4 skills"],
-  ];
-
-  for (const [name, count] of divisions) {
-    console.log(`  ${colors.bright}${name.padEnd(20)}${colors.reset}${colors.dim}${count}${colors.reset}`);
+  const rootDir = path.resolve(import.meta.dir, "..");
+  const skillsDir = path.join(rootDir, "skills");
+  if (!fs.existsSync(skillsDir)) {
+    console.log(`${colors.red}Skills directory not found.${colors.reset}`);
+    return;
   }
-  console.log("");
+  const skills = fs.readdirSync(skillsDir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort();
+  const categories: Record<string, string[]> = { Core: [], Engineering: [], Security: [], Testing: [], Design: [], Guides: [], Other: [] };
+  for (const skill of skills) {
+    if (skill.startsWith("engineering-")) categories.Engineering.push(skill);
+    else if (skill.startsWith("security-")) categories.Security.push(skill);
+    else if (skill.startsWith("testing-")) categories.Testing.push(skill);
+    else if (skill.startsWith("design-")) categories.Design.push(skill);
+    else if (skill === "antigravity-superpowers") categories.Core.push(skill);
+    else if (skill.includes("sdk") || skill.includes("guide")) categories.Guides.push(skill);
+    else categories.Other.push(skill);
+  }
+  for (const [category, items] of Object.entries(categories)) {
+    if (items.length) console.log(`${colors.cyan}${category} (${items.length})${colors.reset}\n  ${items.join(", ")}\n`);
+  }
+  console.log(`${colors.green}Total skills: ${skills.length}${colors.reset}\n`);
 }
 
 function printRoutingDecision(task: string) {
@@ -101,7 +117,7 @@ async function main() {
       break;
     case "verify":
     case "status":
-      verifyInstallation();
+      if (!verifyInstallation()) process.exitCode = 1;
       break;
     case "list":
       listSkills();
@@ -122,7 +138,7 @@ async function main() {
       break;
     case "check-privacy": {
       const result = scanAndDynamizePaths({ fix: false });
-      if (result.issuesCount > 0) process.exit(1);
+      if (result.issuesCount > 0) process.exitCode = 1;
       break;
     }
     case "help":
@@ -130,8 +146,9 @@ async function main() {
       console.log(`Usage: antigravity-superpowers [command]
 
 Commands:
-  install        Install all plugins, skills, and privacy hooks globally and locally
-  verify         Verify installation status and active skills
+  install        Install plugins, skills, and privacy hooks globally and locally
+  verify         Verify required plugins and baseline capabilities
+  status         Alias for verify
   list           List available skills by division
   route <task>   Explain the minimal specialist workflow selected for a task
   sanitize       Replace exact local-home path prefixes with '~' and preserve surrounding text
@@ -142,4 +159,9 @@ Commands:
   }
 }
 
-main().catch(console.error);
+if (import.meta.main) {
+  main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}
