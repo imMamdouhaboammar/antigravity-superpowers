@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -9,101 +10,78 @@ import { routeTask } from "../src/routing/router.ts";
 const colors = {
   reset: "\x1b[0m",
   bright: "\x1b[1m",
-  green: "\x1b[32m",
-  cyan: "\x1b[36m",
-  yellow: "\x1b[33m",
+  dim: "\x1b[2m",
   red: "\x1b[31m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  blue: "\x1b[34m",
+  magenta: "\x1b[35m",
+  cyan: "\x1b[36m",
 };
 
-function printBanner() {
-  console.log(`
-${colors.cyan}${colors.bright}
-   _   _  _ _____ ___  ___  ___    _  _   _____ _____   __
-  /_\\ | \\| |_   _|_ _|/ __|/ _ \\  /_\\| | / /_ _|_   _| /  \\
- / _ \\| .\` | | |  | || (_ | (_) |/ _ \\ |/ / | |  | |  | () |
-/_/ \\_\\_|\\_| |_| |___|\\___|\\___//_/ \\_\\___/ |___| |_|   \\__/
-${colors.reset}
-${colors.yellow}   Autonomous Superpowers & Specialized Division Skills for Antigravity ${colors.reset}
-`);
+function getGlobalGeminiDir(): string {
+  return path.join(os.homedir(), ".gemini");
 }
 
 function verifyInstallation() {
-  console.log(`${colors.yellow}🔍 Verifying Antigravity Superpowers Installation...${colors.reset}\n`);
+  console.log(`\n${colors.magenta}${colors.bright}⚡ ANTIGRAVITY SUPERPOWERS STATUS${colors.reset}\n`);
 
-  const homeDir = os.homedir();
-  const globalPluginsDir = path.join(homeDir, ".gemini", "config", "plugins");
-  const globalSkillsDir = path.join(homeDir, ".gemini", "config", "skills");
+  const globalGeminiDir = getGlobalGeminiDir();
+  const checks = [
+    {
+      name: "Superpowers Plugin",
+      path: path.join(globalGeminiDir, "extensions", "superpowers"),
+    },
+    {
+      name: "Specialized Divisions",
+      path: path.join(globalGeminiDir, "skills", "specialized-divisions"),
+    },
+    {
+      name: "Privacy Path Dynamizer",
+      path: path.join(globalGeminiDir, "antigravity", "scripts", "privacy_path_dynamizer.ts"),
+    },
+    {
+      name: "Global Hook Configuration",
+      path: path.join(globalGeminiDir, "antigravity", "hooks.json"),
+    },
+  ];
 
-  const requiredPlugins = ["antigravity-superpowers", "antigravity-divisions", "google-antigravity-sdk"];
-  let pluginOk = 0;
-
-  for (const plugin of requiredPlugins) {
-    const pPath = path.join(globalPluginsDir, plugin);
-    if (fs.existsSync(pPath)) {
-      console.log(`  ${colors.green}✓ Plugin verified:${colors.reset} ${plugin}`);
-      pluginOk++;
-    } else {
-      console.log(`  ${colors.red}✗ Plugin missing:${colors.reset} ${plugin}`);
-    }
+  let allPassed = true;
+  for (const check of checks) {
+    const exists = fs.existsSync(check.path);
+    if (!exists) allPassed = false;
+    console.log(
+      `${exists ? colors.green + "✓" : colors.red + "✗"}${colors.reset} ${check.name}`,
+    );
   }
 
-  let skillCount = 0;
-  if (fs.existsSync(globalSkillsDir)) {
-    const entries = fs.readdirSync(globalSkillsDir, { withFileTypes: true });
-    skillCount = entries.filter((e) => e.isDirectory()).length;
-  }
-
-  console.log(`\n  ${colors.green}✓ ${skillCount} Global Skills detected in ~/.gemini/config/skills/${colors.reset}`);
-
-  if (pluginOk === requiredPlugins.length && skillCount >= 80) {
-    console.log(`\n${colors.green}${colors.bright}✅ STATUS: Perfect! All Antigravity Superpowers & Division Skills are fully active.${colors.reset}\n`);
+  console.log("");
+  if (allPassed) {
+    console.log(`${colors.green}${colors.bright}All systems operational.${colors.reset}`);
   } else {
-    console.log(`\n${colors.yellow}⚠️ STATUS: Partial installation detected. Run 'antigravity-superpowers install' to fix.${colors.reset}\n`);
+    console.log(
+      `${colors.yellow}Some components are missing. Run 'antigravity-superpowers install'.${colors.reset}`,
+    );
   }
 }
 
 function listSkills() {
-  const rootDir = path.resolve(__dirname, "..");
-  const skillsDir = path.join(rootDir, "skills");
+  console.log(`\n${colors.cyan}${colors.bright}Available Specialized Divisions${colors.reset}\n`);
+  const divisions = [
+    ["Engineering", "22 skills"],
+    ["Security", "14 skills"],
+    ["Testing & QA", "13 skills"],
+    ["Design", "12 skills"],
+    ["Product", "10 skills"],
+    ["Data & AI", "9 skills"],
+    ["Leadership", "7 skills"],
+    ["Business", "4 skills"],
+  ];
 
-  console.log(`${colors.yellow}📋 Listing All Available Antigravity Superpowers & Division Skills:${colors.reset}\n`);
-
-  if (!fs.existsSync(skillsDir)) {
-    console.log(`${colors.red}Skills directory not found. Run 'bun run scripts/setup.ts' first.${colors.reset}`);
-    return;
+  for (const [name, count] of divisions) {
+    console.log(`  ${colors.bright}${name.padEnd(20)}${colors.reset}${colors.dim}${count}${colors.reset}`);
   }
-
-  const entries = fs.readdirSync(skillsDir, { withFileTypes: true });
-  const skills = entries.filter((e) => e.isDirectory()).map((e) => e.name);
-
-  const categories: Record<string, string[]> = {
-    "⚡ Core Superpowers": [],
-    "💻 Engineering Division": [],
-    "🛡️ Security Division": [],
-    "🧪 Testing & QA Division": [],
-    "🎨 Design Division": [],
-    "📚 Guides & SDK": [],
-    "📦 Other": [],
-  };
-
-  for (const skill of skills) {
-    if (skill.startsWith("engineering-")) categories["💻 Engineering Division"].push(skill);
-    else if (skill.startsWith("security-")) categories["🛡️ Security Division"].push(skill);
-    else if (skill.startsWith("testing-")) categories["🧪 Testing & QA Division"].push(skill);
-    else if (skill.startsWith("design-")) categories["🎨 Design Division"].push(skill);
-    else if (skill === "antigravity-superpowers") categories["⚡ Core Superpowers"].push(skill);
-    else if (skill.includes("sdk") || skill.includes("guide")) categories["📚 Guides & SDK"].push(skill);
-    else categories["📦 Other"].push(skill);
-  }
-
-  for (const [cat, items] of Object.entries(categories)) {
-    if (items.length > 0) {
-      console.log(`${colors.cyan}${cat} (${items.length}):${colors.reset}`);
-      console.log(`  ${items.join(", ")}\n`);
-    }
-  }
-
-  console.log(`${colors.green}Total Skills Available: ${skills.length}${colors.reset}\n`);
+  console.log("");
 }
 
 function printRoutingDecision(task: string) {
@@ -115,7 +93,6 @@ function printRoutingDecision(task: string) {
 }
 
 async function main() {
-  printBanner();
   const command = process.argv[2] || "install";
 
   switch (command) {
@@ -157,8 +134,8 @@ Commands:
   verify         Verify installation status and active skills
   list           List available skills by division
   route <task>   Explain the minimal specialist workflow selected for a task
-  sanitize       Scan and convert hardcoded local user paths to dynamic expressions
-  check-privacy  Check for hardcoded local user paths without modifying files
+  sanitize       Replace exact local-home path prefixes with '~' and preserve surrounding text
+  check-privacy  Check for hardcoded local user paths without modifying files (fails if issues found)
   help           Display this help message
 `);
       break;

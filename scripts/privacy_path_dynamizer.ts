@@ -6,6 +6,14 @@ export interface ScanOptions {
   fix?: boolean;
   verbose?: boolean;
   targetDir?: string;
+  homeDir?: string;
+  username?: string;
+  log?: (message: string) => void;
+}
+
+export interface FlaggedFile {
+  file: string;
+  line: number;
 }
 
 const colors = {
@@ -13,7 +21,8 @@ const colors = {
   bright: "\x1b[1m",
   green: "\x1b[32m",
   cyan: "\x1b[36m",
-  yellow: "\x1b[33m",  red: "\x1b[31m",
+  yellow: "\x1b[33m",
+  red: "\x1b[31m",
 };
 
 const IGNORE_DIRS = new Set([
@@ -23,6 +32,9 @@ const IGNORE_DIRS = new Set([
   "build",
   ".next",
   "coverage",
+]);
+
+const SCOPED_IGNORE_DIRS = new Set([
   ".gemini/antigravity/brain",
   ".gemini/antigravity/logs",
 ]);
@@ -35,131 +47,129 @@ const IGNORE_FILES = new Set([
   ".DS_Store",
 ]);
 
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+function replaceLocalPaths(line: string, homeRegex: RegExp, userPathRegex: RegExp): string {
+  homeRegex.lastIndex = 0;
+  userPathRegex.lastIndex = 0;
+  return line.replace(homeRegex, "~").replace(userPathRegex, "~");
+}
+
+function atomicWrite(filePath: string, content: string): void {
+  const tempPath = `${filePath}.antigravity-superpowers.tmp-${process.pid}`;
+  const mode = fs.statSync(filePath).mode;
+  try {
+    fs.writeFileSync(tempPath, content, { encoding: "utf-8", mode });
+    fs.renameSync(tempPath, filePath);
+  } finally {
+    if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+  }
+}
+
 export function scanAndDynamizePaths(options: ScanOptions = {}) {
   const targetDir = path.resolve(options.targetDir || process.cwd());
-  const homeDir = os.homedir();
-  const username = os.userInfo().username || process.env.USER || "";
+  const homeDir = options.homeDir ?? os.homedir();
+  const username = options.username ?? os.userInfo().username ?? process.env.USER ?? "";
+  const log = options.log ?? console.log;
 
-  console.log(`${colors.cyan}${colors.bright}🛡️ Antigravity Privacy & Path Dynamizer Engine${colors.reset}`);
-  console.log(`Target Directory: ${targetDir}`);
-  console.log(`Detected Home Dir: ${homeDir}`);
-  console.log(`Detected Username: ${username}\n`);
+  log(`${colors.cyan}${colors.bright}Antigravity Privacy & Path Dynamizer${colors.reset}`);
+  log(`Scanning repository root without printing local identity details.`);
 
   if (!homeDir || homeDir === "/" || !username) {
-    console.log(`${colors.yellow}⚠️ Home directory or username undetermined. Skipping path scan.${colors.reset}`);
-    return { issuesCount: 0, fixedCount: 0 };
+    log(`${colors.yellow}Home directory or username could not be determined. Path scan skipped.${colors.reset}`);
+    return { issuesCount: 0, fixedCount: 0, flaggedFiles: [] as FlaggedFile[] };
   }
 
-  const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const homeRegex = new RegExp(escapeRegExp(homeDir), "g");
-  const userPathRegex = new RegExp(`/Users/${escapeRegExp(username)}|/home/${escapeRegExp(username)}`, "g");
+  const homeRegex = new RegExp(`${escapeRegExp(homeDir)}(?=$|[/\\\\])`, "g");
+  const userPathRegex = new RegExp(
+    `(?:/Users|/home)/${escapeRegExp(username)}(?=$|[/\\\\])`,
+    "g",
+  );
 
   let issuesCount = 0;
   let fixedCount = 0;
-  const flaggedFiles: { file: string; line: number; content: string }[] = [];
+  const flaggedFiles: FlaggedFile[] = [];
 
   function processFile(filePath: string) {
-    const ext = path.extname(filePath).toLowerCase();
     const relPath = path.relative(targetDir, filePath);
-
-    // Skip ignored files
     if (IGNORE_FILES.has(path.basename(filePath))) return;
+    if (filePath.endsWith("privacy_path_dynamizer.ts")) return;
 
+    let content: string;
     try {
-      const content = fs.readFileSync(filePath, "utf-8");
-      const lines = content.split("\n");
-      let modified = false;
-      const newLines: string[] = [];
+      const buffer = fs.readFileSync(filePath);
+      if (buffer.includes(0)) return;
+      content = buffer.toString("utf-8");
+    } catch {
+      if (options.verbose) log(`${colors.yellow}Skipped unreadable file:${colors.reset} ${relPath}`);
+      return;
+    }
 
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        if (homeRegex.test(line) || userPathRegex.test(line)) {
-          // Reset regex state
-          homeRegex.lastIndex = 0;
-          userPathRegex.lastIndex = 0;
+    const lines = content.split("\n");
+    let modified = false;
+    const newLines = lines.map((line, index) => {
+      homeRegex.lastIndex = 0;
+      userPathRegex.lastIndex = 0;
+      const matches = homeRegex.test(line) || userPathRegex.test(line);
+      homeRegex.lastIndex = 0;
+      userPathRegex.lastIndex = 0;
 
-          // Ignore self-references in this privacy dynamizer script itself
-          if (filePath.endsWith("privacy_path_dynamizer.ts")) {
-            newLines.push(line);
-            continue;
-          }
+      if (!matches) return line;
 
-          issuesCount++;
-          flaggedFiles.push({ file: relPath, line: i + 1, content: line.trim() });
+      issuesCount++;
+      flaggedFiles.push({ file: relPath, line: index + 1 });
+      if (!options.fix) return line;
 
-          if (options.fix) {
-            let fixedLine = line;
-            if (ext === ".ts" || ext === ".js" || ext === ".json") {
-              fixedLine = fixedLine.replace(homeRegex, `path.join(os.homedir())`);
-              fixedLine = fixedLine.replace(userPathRegex, `os.homedir()`);
-            } else if (ext === ".sh" || ext === ".bash") {
-              fixedLine = fixedLine.replace(homeRegex, `"$HOME"`);
-              fixedLine = fixedLine.replace(userPathRegex, `"$HOME"`);
-            } else if (ext === ".md") {
-              fixedLine = fixedLine.replace(homeRegex, `~`);
-              fixedLine = fixedLine.replace(userPathRegex, `~`);
-            } else {
-              fixedLine = fixedLine.replace(homeRegex, `$HOME`);
-              fixedLine = fixedLine.replace(userPathRegex, `$HOME`);
-            }
-
-            if (fixedLine !== line) {
-              modified = true;
-              fixedCount++;
-              newLines.push(fixedLine);
-            } else {
-              newLines.push(line);
-            }
-          } else {
-            newLines.push(line);
-          }
-        } else {
-          newLines.push(line);
-        }
+      const fixedLine = replaceLocalPaths(line, homeRegex, userPathRegex);
+      if (fixedLine !== line) {
+        modified = true;
+        fixedCount++;
       }
+      return fixedLine;
+    });
 
-      if (options.fix && modified) {
-        fs.writeFileSync(filePath, newLines.join("\n"), "utf-8");
-        console.log(`  ${colors.green}✓ Dynamized paths in:${colors.reset} ${relPath}`);
-      }
-    } catch (e) {
-      // Ignore binary files or unreadable files
+    if (options.fix && modified) {
+      atomicWrite(filePath, newLines.join("\n"));
+      log(`${colors.green}Sanitized:${colors.reset} ${relPath}`);
     }
   }
 
   function walkDir(dir: string) {
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (IGNORE_DIRS.has(entry.name)) continue;
-      const fullPath = path.join(dir, entry.name);
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+      entries.sort((a, b) => a.name.localeCompare(b.name));
+    } catch {
+      if (options.verbose) log(`${colors.yellow}Skipped unreadable directory.${colors.reset}`);
+      return;
+    }
 
-      if (entry.isDirectory()) {
-        walkDir(fullPath);
-      } else if (entry.isFile()) {
-        processFile(fullPath);
-      }
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      const relativePath = path.relative(targetDir, fullPath).split(path.sep).join("/");
+      if (IGNORE_DIRS.has(entry.name) || SCOPED_IGNORE_DIRS.has(relativePath)) continue;
+      if (entry.isSymbolicLink()) continue;
+      if (entry.isDirectory()) walkDir(fullPath);
+      else if (entry.isFile()) processFile(fullPath);
     }
   }
 
   walkDir(targetDir);
 
   if (flaggedFiles.length > 0) {
-    console.log(`${colors.yellow}⚠️ Detected ${flaggedFiles.length} hardcoded local user paths across repository:${colors.reset}\n`);
+    log(`${colors.yellow}Detected ${flaggedFiles.length} local-path occurrence(s):${colors.reset}`);
     for (const item of flaggedFiles.slice(0, 15)) {
-      console.log(`  ${colors.red}${item.file}:${item.line}${colors.reset} -> ${item.content}`);
+      log(`  ${colors.red}${item.file}:${item.line}${colors.reset}`);
     }
-    if (flaggedFiles.length > 15) {
-      console.log(`  ... and ${flaggedFiles.length - 15} more instances.`);
-    }
+    if (flaggedFiles.length > 15) log(`  ... and ${flaggedFiles.length - 15} more occurrence(s).`);
 
     if (!options.fix) {
-      console.log(`\n${colors.red}❌ PRE-PUSH CHECK FAILED:${colors.reset} Hardcoded local paths found!`);
-      console.log(`${colors.yellow}Run 'bun run scripts/privacy_path_dynamizer.ts --fix' or 'antigravity-superpowers sanitize' to automatically convert them to dynamic paths.${colors.reset}\n`);
+      log(`${colors.red}Privacy check failed.${colors.reset} Run with --fix to replace exact local-home prefixes with '~'.`);
     } else {
-      console.log(`\n${colors.green}✅ FIXED:${colors.reset} Dynamized ${fixedCount} hardcoded paths! Repository is clean and safe for GitHub Public release.\n`);
+      log(`${colors.green}Sanitized ${fixedCount} occurrence(s).${colors.reset} Review the diff before committing.`);
     }
   } else {
-    console.log(`${colors.green}✅ PERFECT:${colors.reset} Zero hardcoded personal user paths detected! Repository is 100% clean and dynamic for GitHub Public release.\n`);
+    log(`${colors.green}No matching local-home paths were detected by this scanner.${colors.reset}`);
   }
 
   return { issuesCount, fixedCount, flaggedFiles };
@@ -169,10 +179,8 @@ if (import.meta.main) {
   const args = process.argv.slice(2);
   const isFix = args.includes("--fix");
   const isCheck = args.includes("--check");
+  const verbose = args.includes("--verbose");
 
-  const result = scanAndDynamizePaths({ fix: isFix });
-
-  if (isCheck && result.issuesCount > 0 && !isFix) {
-    process.exit(1);
-  }
+  const result = scanAndDynamizePaths({ fix: isFix, verbose });
+  if (isCheck && result.issuesCount > 0 && !isFix) process.exit(1);
 }
