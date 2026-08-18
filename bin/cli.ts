@@ -4,6 +4,7 @@ import path from "node:path";
 import os from "node:os";
 import { installSuperpowers } from "../install.ts";
 import { scanAndDynamizePaths } from "../scripts/privacy_path_dynamizer.ts";
+import { routeTask } from "../src/routing/router.ts";
 
 const colors = {
   reset: "\x1b[0m",
@@ -105,6 +106,14 @@ function listSkills() {
   console.log(`${colors.green}Total Skills Available: ${skills.length}${colors.reset}\n`);
 }
 
+function printRoutingDecision(task: string) {
+  const decision = routeTask(task);
+  console.log(`${colors.cyan}Routing decision${colors.reset}`);
+  console.log(`  Complexity: ${decision.complexity}`);
+  console.log(`  Skills: ${decision.skills.length ? decision.skills.join(", ") : "none"}`);
+  for (const reason of decision.reasons) console.log(`  - ${reason}`);
+}
+
 async function main() {
   printBanner();
   const command = process.argv[2] || "install";
@@ -120,24 +129,36 @@ async function main() {
     case "list":
       listSkills();
       break;
+    case "route": {
+      const task = process.argv.slice(3).join(" ").trim();
+      if (!task) {
+        console.error(`${colors.red}Provide a task to classify, for example: antigravity-superpowers route "Debug failing test"${colors.reset}`);
+        process.exitCode = 2;
+        break;
+      }
+      printRoutingDecision(task);
+      break;
+    }
     case "sanitize":
     case "fix-privacy":
       scanAndDynamizePaths({ fix: true });
       break;
-    case "check-privacy":
+    case "check-privacy": {
       const result = scanAndDynamizePaths({ fix: false });
       if (result.issuesCount > 0) process.exit(1);
       break;
+    }
     case "help":
     default:
       console.log(`Usage: antigravity-superpowers [command]
 
 Commands:
   install        Install all plugins, skills, and privacy hooks globally and locally
-  verify         Verify system status and active skills
-  list           List all 91+ available skills by division
-  sanitize       Scan and automatically convert hardcoded local user paths to dynamic expressions
-  check-privacy  Check for hardcoded local user paths without modifying files (fails if issues found)
+  verify         Verify installation status and active skills
+  list           List available skills by division
+  route <task>   Explain the minimal specialist workflow selected for a task
+  sanitize       Scan and convert hardcoded local user paths to dynamic expressions
+  check-privacy  Check for hardcoded local user paths without modifying files
   help           Display this help message
 `);
       break;
