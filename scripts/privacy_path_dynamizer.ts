@@ -138,6 +138,7 @@ export function scanAndDynamizePaths(options: ScanOptions = {}) {
     let entries: fs.Dirent[];
     try {
       entries = fs.readdirSync(dir, { withFileTypes: true });
+      entries.sort((a, b) => a.name.localeCompare(b.name));
     } catch {
       if (options.verbose) log(`${colors.yellow}Skipped unreadable directory.${colors.reset}`);
       return;
