@@ -1,17 +1,22 @@
 #!/usr/bin/env bun
+
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { installSuperpowers } from "../install.ts";
 import { scanAndDynamizePaths } from "../scripts/privacy_path_dynamizer.ts";
+import { routeTask } from "../src/routing/router.ts";
 
 const colors = {
   reset: "\x1b[0m",
   bright: "\x1b[1m",
-  green: "\x1b[32m",
-  cyan: "\x1b[36m",
-  yellow: "\x1b[33m",
+  dim: "\x1b[2m",
   red: "\x1b[31m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  blue: "\x1b[34m",
+  magenta: "\x1b[35m",
+  cyan: "\x1b[36m",
 };
 
 function printBanner() {
@@ -72,7 +77,7 @@ function verifyInstallation() {
 }
 
 function listSkills() {
-  const rootDir = path.resolve(__dirname, "..");
+  const rootDir = path.resolve(import.meta.dir, "..");
   const skillsDir = path.join(rootDir, "skills");
   if (!fs.existsSync(skillsDir)) {
     console.log(`${colors.red}Skills directory not found.${colors.reset}`);
@@ -95,16 +100,42 @@ function listSkills() {
   console.log(`${colors.green}Total skills: ${skills.length}${colors.reset}\n`);
 }
 
+function printRoutingDecision(task: string) {
+  const decision = routeTask(task);
+  console.log(`${colors.cyan}Routing decision${colors.reset}`);
+  console.log(`  Complexity: ${decision.complexity}`);
+  console.log(`  Skills: ${decision.skills.length ? decision.skills.join(", ") : "none"}`);
+  for (const reason of decision.reasons) console.log(`  - ${reason}`);
+}
+
 async function main() {
-  printBanner();
   const command = process.argv[2] || "install";
+
   switch (command) {
-    case "install": await installSuperpowers(); break;
+    case "install":
+      await installSuperpowers();
+      break;
     case "verify":
-    case "status": if (!verifyInstallation()) process.exitCode = 1; break;
-    case "list": listSkills(); break;
+    case "status":
+      if (!verifyInstallation()) process.exitCode = 1;
+      break;
+    case "list":
+      listSkills();
+      break;
+    case "route": {
+      const task = process.argv.slice(3).join(" ").trim();
+      if (!task) {
+        console.error(`${colors.red}Provide a task to classify, for example: antigravity-superpowers route "Debug failing test"${colors.reset}`);
+        process.exitCode = 2;
+        break;
+      }
+      printRoutingDecision(task);
+      break;
+    }
     case "sanitize":
-    case "fix-privacy": scanAndDynamizePaths({ fix: true }); break;
+    case "fix-privacy":
+      scanAndDynamizePaths({ fix: true });
+      break;
     case "check-privacy": {
       const result = scanAndDynamizePaths({ fix: false });
       if (result.issuesCount > 0) process.exitCode = 1;
@@ -112,8 +143,25 @@ async function main() {
     }
     case "help":
     default:
-      console.log(`Usage: antigravity-superpowers [command]\n\nCommands:\n  install        Install plugins, skills, and privacy hooks\n  verify         Verify required plugins and baseline capabilities\n  status         Alias for verify\n  list           List available skills by division\n  sanitize       Replace hardcoded local user paths with dynamic expressions\n  check-privacy  Check hardcoded local user paths without modifying files\n  help           Display this help message\n`);
+      console.log(`Usage: antigravity-superpowers [command]
+
+Commands:
+  install        Install plugins, skills, and privacy hooks globally and locally
+  verify         Verify required plugins and baseline capabilities
+  status         Alias for verify
+  list           List available skills by division
+  route <task>   Explain the minimal specialist workflow selected for a task
+  sanitize       Replace exact local-home path prefixes with '~' and preserve surrounding text
+  check-privacy  Check for hardcoded local user paths without modifying files (fails if issues found)
+  help           Display this help message
+`);
+      break;
   }
 }
 
-if (import.meta.main) main().catch((error) => { console.error(error); process.exitCode = 1; });
+if (import.meta.main) {
+  main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}
