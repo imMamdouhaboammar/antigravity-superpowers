@@ -86,6 +86,9 @@ export function routeTask(input: string): RoutingDecision {
 
   if (securitySensitive && readOnlyReview && !majorFeature) {
     reasons.push("Read-only security review: no implementation specialist is needed.");
+  } else if (readOnlyReview) {
+    skills.push("engineering-code-reviewer");
+    reasons.push("Read-only assessment: use an independent reviewer without activating implementation or test roles.");
   } else if (majorFeature) {
     skills.push("engineering-software-architect", "engineering-senior-developer");
     reasons.push("Large implementation scope requires architecture before implementation.");
@@ -100,7 +103,7 @@ export function routeTask(input: string): RoutingDecision {
     reasons.push("Default to the smallest engineering role that can complete the task.");
   }
 
-  if (design && frontend) {
+  if (design && frontend && !readOnlyReview) {
     skills.push("design-ui-designer");
     reasons.push("UI implementation explicitly includes design or UX work.");
   }
@@ -118,9 +121,9 @@ export function routeTask(input: string): RoutingDecision {
 
   const complexity: TaskComplexity = securitySensitive
     ? "high-risk"
-    : majorFeature
+    : majorFeature && !readOnlyReview
       ? "complex"
-      : debugging || frontend
+      : debugging || frontend || readOnlyReview
         ? "standard"
         : "trivial";
 
