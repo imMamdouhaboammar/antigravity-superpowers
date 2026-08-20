@@ -74,7 +74,7 @@ export function routeTask(input: string): RoutingDecision {
   const securitySensitive = includesAny(text, SECURITY_TERMS);
   const frontend = includesAny(text, FRONTEND_TERMS);
   const design = includesAny(text, DESIGN_TERMS);
-  const readOnlyReview = includesAny(text, READ_ONLY_REVIEW_TERMS) && !includesAny(text, MUTATION_TERMS) && !debugging;
+  const readOnlyReview = includesAny(text, READ_ONLY_REVIEW_TERMS) && !includesAny(text, MUTATION_TERMS);
 
   const skills: string[] = [];
   const reasons: string[] = [];
@@ -108,7 +108,7 @@ export function routeTask(input: string): RoutingDecision {
     reasons.push("UI implementation explicitly includes design or UX work.");
   }
 
-  const codeChangeLikely = !readOnlyReview || debugging || majorFeature;
+  const codeChangeLikely = !readOnlyReview;
   if ((debugging || majorFeature || securitySensitive) && codeChangeLikely) {
     skills.push("testing-test-automation-engineer");
     reasons.push("Non-trivial or risky code changes require targeted verification.");
