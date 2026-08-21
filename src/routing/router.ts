@@ -43,6 +43,16 @@ const DESIGN_TERMS = ["ux", "visual design", "design system", "wireframe", "layo
 const DOC_ONLY_TERMS = ["readme", "documentation", "docs", "typo", "spelling", "copy edit"];
 const READ_ONLY_REVIEW_TERMS = ["review", "audit", "analyze", "analyse", "assess", "inspect"];
 const MUTATION_TERMS = ["fix", "change", "implement", "build", "add", "remove", "update", "refactor", "migrate", "write"];
+const RECOMMENDATION_PREFIXES = ["suggest", "recommend", "propose", "identify", "list", "describe"];
+
+function hasMutationIntent(text: string): boolean {
+  const recommendationPattern = new RegExp(
+    `(?:${RECOMMENDATION_PREFIXES.join("|")})\\s+(?:possible\\s+|potential\\s+)?(?:fix(?:es)?|changes?|updates?|improvements?|refactors?|migrations?)`,
+    "gi",
+  );
+  const imperativeText = text.replace(recommendationPattern, "recommendation");
+  return includesAny(imperativeText, MUTATION_TERMS);
+}
 
 function unique(items: string[]): string[] {
   return [...new Set(items)];
@@ -74,7 +84,7 @@ export function routeTask(input: string): RoutingDecision {
   const securitySensitive = includesAny(text, SECURITY_TERMS);
   const frontend = includesAny(text, FRONTEND_TERMS);
   const design = includesAny(text, DESIGN_TERMS);
-  const readOnlyReview = includesAny(text, READ_ONLY_REVIEW_TERMS) && !includesAny(text, MUTATION_TERMS) && !debugging;
+  const readOnlyReview = includesAny(text, READ_ONLY_REVIEW_TERMS) && !hasMutationIntent(text);
 
   const skills: string[] = [];
   const reasons: string[] = [];
@@ -86,6 +96,9 @@ export function routeTask(input: string): RoutingDecision {
 
   if (securitySensitive && readOnlyReview && !majorFeature) {
     reasons.push("Read-only security review: no implementation specialist is needed.");
+  } else if (readOnlyReview) {
+    skills.push("engineering-code-reviewer");
+    reasons.push("Read-only assessment: use an independent reviewer without activating implementation or test roles.");
   } else if (majorFeature) {
     skills.push("engineering-software-architect", "engineering-senior-developer");
     reasons.push("Large implementation scope requires architecture before implementation.");
@@ -100,12 +113,12 @@ export function routeTask(input: string): RoutingDecision {
     reasons.push("Default to the smallest engineering role that can complete the task.");
   }
 
-  if (design && frontend) {
+  if (design && frontend && !readOnlyReview) {
     skills.push("design-ui-designer");
     reasons.push("UI implementation explicitly includes design or UX work.");
   }
 
-  const codeChangeLikely = !readOnlyReview || debugging || majorFeature;
+  const codeChangeLikely = !readOnlyReview;
   if ((debugging || majorFeature || securitySensitive) && codeChangeLikely) {
     skills.push("testing-test-automation-engineer");
     reasons.push("Non-trivial or risky code changes require targeted verification.");
@@ -118,9 +131,9 @@ export function routeTask(input: string): RoutingDecision {
 
   const complexity: TaskComplexity = securitySensitive
     ? "high-risk"
-    : majorFeature
+    : majorFeature && !readOnlyReview
       ? "complex"
-      : debugging || frontend
+      : debugging || frontend || readOnlyReview
         ? "standard"
         : "trivial";
 

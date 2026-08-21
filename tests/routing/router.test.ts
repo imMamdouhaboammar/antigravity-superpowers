@@ -56,6 +56,41 @@ describe("routeTask", () => {
     expect(decision.skills).toEqual(["security-appsec-engineer"]);
   });
 
+  test("routes read-only code review to the reviewer instead of an implementation owner", () => {
+    const decision = routeTask("Review React component state handling");
+    expect(decision.complexity).toBe("standard");
+    expect(decision.skills).toEqual(["engineering-code-reviewer"]);
+    expect(decision.skills).not.toContain("engineering-frontend-developer");
+  });
+
+  test("keeps recommendation-only fixes inside the review workflow", () => {
+    const decision = routeTask("Review React component and suggest fixes");
+    expect(decision.complexity).toBe("standard");
+    expect(decision.skills).toEqual(["engineering-code-reviewer"]);
+    expect(decision.skills).not.toContain("engineering-frontend-developer");
+    expect(decision.skills).not.toContain("testing-test-automation-engineer");
+  });
+
+  test("still treats imperative fixes as mutation work", () => {
+    const decision = routeTask("Review React component and fix state handling");
+    expect(decision.skills).toContain("engineering-frontend-developer");
+    expect(decision.skills).not.toEqual(["engineering-code-reviewer"]);
+  });
+
+  test("keeps architecture inspection read-only when no mutation is requested", () => {
+    const decision = routeTask("Inspect architecture of the host adapters");
+    expect(decision.complexity).toBe("standard");
+    expect(decision.skills).toEqual(["engineering-code-reviewer"]);
+    expect(decision.skills).not.toContain("engineering-software-architect");
+    expect(decision.skills).not.toContain("engineering-senior-developer");
+  });
+
+  test("does not add test automation to a read-only bug assessment", () => {
+    const decision = routeTask("Assess React component for potential bugs");
+    expect(decision.skills).toEqual(["engineering-code-reviewer"]);
+    expect(decision.skills).not.toContain("testing-test-automation-engineer");
+  });
+
   test("does not add design specialists to plain frontend implementation", () => {
     const decision = routeTask("Fix React component state update");
     expect(decision.skills).toEqual(["engineering-frontend-developer"]);
