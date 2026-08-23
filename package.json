@@ -21,7 +21,8 @@
     "install:skills": "bun run install.ts",
     "verify": "bun run bin/cli.ts verify",
     "cli": "bun run bin/cli.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "check:skill-mirror": "bun run scripts/check_skill_mirror.ts"
   },
   "keywords": [
     "antigravity",
@@ -44,4 +45,3 @@
     "bun-types": "latest"
   }
 }
-
