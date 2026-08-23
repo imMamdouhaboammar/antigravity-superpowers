@@ -25,21 +25,13 @@ describe("routeTask", () => {
   test("routes failing tests to debugging and test verification", () => {
     const decision = routeTask("Debug failing test in the installer");
     expect(decision.complexity).toBe("standard");
-    expect(decision.skills).toEqual([
-      "engineering-senior-developer",
-      "testing-test-automation-engineer",
-    ]);
+    expect(decision.skills).toEqual(["engineering-senior-developer", "testing-test-automation-engineer"]);
   });
 
   test("routes major features through architecture implementation review and verification", () => {
     const decision = routeTask("Design and implement major feature for host adapters");
     expect(decision.complexity).toBe("complex");
-    expect(decision.skills).toEqual([
-      "engineering-software-architect",
-      "engineering-senior-developer",
-      "testing-test-automation-engineer",
-      "engineering-code-reviewer",
-    ]);
+    expect(decision.skills).toEqual(["engineering-software-architect", "engineering-senior-developer", "testing-test-automation-engineer", "engineering-code-reviewer"]);
   });
 
   test("always includes explicit security review for sensitive changes", () => {
@@ -60,15 +52,26 @@ describe("routeTask", () => {
     const decision = routeTask("Review React component state handling");
     expect(decision.complexity).toBe("standard");
     expect(decision.skills).toEqual(["engineering-code-reviewer"]);
-    expect(decision.skills).not.toContain("engineering-frontend-developer");
   });
 
   test("keeps recommendation-only fixes inside the review workflow", () => {
     const decision = routeTask("Review React component and suggest fixes");
     expect(decision.complexity).toBe("standard");
     expect(decision.skills).toEqual(["engineering-code-reviewer"]);
-    expect(decision.skills).not.toContain("engineering-frontend-developer");
-    expect(decision.skills).not.toContain("testing-test-automation-engineer");
+  });
+
+  test("keeps recommendation article forms inside the review workflow", () => {
+    for (const task of [
+      "Review React component and recommend a fix",
+      "Review React component and propose an update",
+      "Review React component and suggest the changes",
+    ]) {
+      const decision = routeTask(task);
+      expect(decision.complexity).toBe("standard");
+      expect(decision.skills).toEqual(["engineering-code-reviewer"]);
+      expect(decision.skills).not.toContain("engineering-frontend-developer");
+      expect(decision.skills).not.toContain("testing-test-automation-engineer");
+    }
   });
 
   test("still treats imperative fixes as mutation work", () => {
@@ -81,28 +84,21 @@ describe("routeTask", () => {
     const decision = routeTask("Inspect architecture of the host adapters");
     expect(decision.complexity).toBe("standard");
     expect(decision.skills).toEqual(["engineering-code-reviewer"]);
-    expect(decision.skills).not.toContain("engineering-software-architect");
-    expect(decision.skills).not.toContain("engineering-senior-developer");
   });
 
   test("does not add test automation to a read-only bug assessment", () => {
     const decision = routeTask("Assess React component for potential bugs");
     expect(decision.skills).toEqual(["engineering-code-reviewer"]);
-    expect(decision.skills).not.toContain("testing-test-automation-engineer");
   });
 
   test("does not add design specialists to plain frontend implementation", () => {
     const decision = routeTask("Fix React component state update");
     expect(decision.skills).toEqual(["engineering-frontend-developer"]);
-    expect(decision.skills).not.toContain("design-ui-designer");
   });
 
   test("adds a design specialist only when UI work explicitly includes design", () => {
     const decision = routeTask("Implement React UI layout from the new design system");
-    expect(decision.skills).toEqual([
-      "engineering-frontend-developer",
-      "design-ui-designer",
-    ]);
+    expect(decision.skills).toEqual(["engineering-frontend-developer", "design-ui-designer"]);
   });
 
   test("does not route an empty request", () => {
