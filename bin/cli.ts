@@ -112,9 +112,17 @@ async function main() {
   const command = process.argv[2] || "install";
 
   switch (command) {
-    case "install":
-      await installSuperpowers();
+    case "install": {
+      const args = process.argv.slice(3);
+      const isGlobal = args.includes("--global");
+      const isProject = args.includes("--project");
+      const hasExplicitScope = isGlobal || isProject;
+      await installSuperpowers({
+        global: hasExplicitScope ? isGlobal : true,
+        project: hasExplicitScope ? isProject : true,
+      });
       break;
+    }
     case "verify":
     case "status":
       if (!verifyInstallation()) process.exitCode = 1;
@@ -146,14 +154,14 @@ async function main() {
       console.log(`Usage: antigravity-superpowers [command]
 
 Commands:
-  install        Install plugins, skills, and privacy hooks globally and locally
-  verify         Verify required plugins and baseline capabilities
-  status         Alias for verify
-  list           List available skills by division
-  route <task>   Explain the minimal specialist workflow selected for a task
-  sanitize       Replace exact local-home path prefixes with '~' and preserve surrounding text
-  check-privacy  Check for hardcoded local user paths without modifying files (fails if issues found)
-  help           Display this help message
+  install [--global|--project]  Install globally, locally, or both when no scope is specified
+  verify                       Verify required plugins and baseline capabilities
+  status                       Alias for verify
+  list                         List available skills by division
+  route <task>                  Explain the minimal specialist workflow selected for a task
+  sanitize                      Replace exact local-home path prefixes with '~' and preserve surrounding text
+  check-privacy                 Check for hardcoded local user paths without modifying files (fails if issues found)
+  help                          Display this help message
 `);
       break;
   }
