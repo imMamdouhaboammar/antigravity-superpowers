@@ -43,13 +43,9 @@ const DESIGN_TERMS = ["ux", "visual design", "design system", "wireframe", "layo
 const DOC_ONLY_TERMS = ["readme", "documentation", "docs", "typo", "spelling", "copy edit"];
 const READ_ONLY_REVIEW_TERMS = ["review", "audit", "analyze", "analyse", "assess", "inspect"];
 const MUTATION_TERMS = ["fix", "change", "implement", "build", "add", "remove", "update", "refactor", "migrate", "write"];
-const RECOMMENDATION_PREFIXES = ["suggest", "recommend", "propose", "identify", "list", "describe"];
 
 function hasMutationIntent(text: string): boolean {
-  const recommendationPattern = new RegExp(
-    `(?:${RECOMMENDATION_PREFIXES.join("|")})\\s+(?:possible\\s+|potential\\s+)?(?:fix(?:es)?|changes?|updates?|improvements?|refactors?|migrations?)`,
-    "gi",
-  );
+  const recommendationPattern = /(?:suggest|recommend|propose|identify|list|describe)\s+(?:(?:possible|potential|a|an|the|some)\s+)*(?:fix(?:es)?|changes?|updates?|improvements?|refactors?|migrations?)/gi;
   const imperativeText = text.replace(recommendationPattern, "recommendation");
   return includesAny(imperativeText, MUTATION_TERMS);
 }
