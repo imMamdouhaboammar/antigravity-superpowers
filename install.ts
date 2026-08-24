@@ -168,42 +168,48 @@ export async function installSuperpowers(options: InstallOptions = {}) {
   const globalSkillsDir = path.join(homeDir, ".gemini", "config", "skills");
   const currentDir = path.resolve(options.targetDir || process.cwd());
   const localAgentsSkillsDir = path.join(currentDir, ".agents", "skills");
+  const installGlobal = options.global !== false;
+  const installProject = options.project !== false;
 
   console.log(`${colors.cyan}${colors.bright}⚡ Antigravity Superpowers Installer v1.0.0${colors.reset}\n`);
 
-  console.log(`${colors.yellow}📦 Installing Antigravity Plugins...${colors.reset}`);
   const srcPluginsDir = path.join(rootDir, "plugins");
-
-  if (fs.existsSync(srcPluginsDir)) {
-    const plugins = fs.readdirSync(srcPluginsDir, { withFileTypes: true });
-    for (const plugin of plugins) {
-      if (plugin.isDirectory()) {
-        const srcPluginPath = path.join(srcPluginsDir, plugin.name);
-        const destPluginPath = path.join(globalPluginsDir, plugin.name);
-        copyDirRecursive(srcPluginPath, destPluginPath);
-        console.log(`  ${colors.green}✓ Plugin installed:${colors.reset} ${plugin.name} -> ${destPluginPath}`);
-      }
-    }
-  }
-
-  console.log(`\n${colors.yellow}🧠 Installing Skills Globally (~/.gemini/config/skills/)...${colors.reset}`);
   const srcSkillsDir = path.join(rootDir, "skills");
-  let installedGlobalCount = 0;
 
-  if (fs.existsSync(srcSkillsDir)) {
-    const skills = fs.readdirSync(srcSkillsDir, { withFileTypes: true });
-    for (const skill of skills) {
-      if (skill.isDirectory()) {
-        const srcSkillPath = path.join(srcSkillsDir, skill.name);
-        const destSkillPath = path.join(globalSkillsDir, skill.name);
-        copyDirRecursive(srcSkillPath, destSkillPath);
-        installedGlobalCount++;
+  if (installGlobal) {
+    console.log(`${colors.yellow}📦 Installing Antigravity Plugins...${colors.reset}`);
+    if (fs.existsSync(srcPluginsDir)) {
+      const plugins = fs.readdirSync(srcPluginsDir, { withFileTypes: true });
+      for (const plugin of plugins) {
+        if (plugin.isDirectory()) {
+          const srcPluginPath = path.join(srcPluginsDir, plugin.name);
+          const destPluginPath = path.join(globalPluginsDir, plugin.name);
+          copyDirRecursive(srcPluginPath, destPluginPath);
+          console.log(`  ${colors.green}✓ Plugin installed:${colors.reset} ${plugin.name} -> ${destPluginPath}`);
+        }
       }
     }
-    console.log(`  ${colors.green}✓ ${installedGlobalCount} Skills installed globally.${colors.reset}`);
+
+    console.log(`\n${colors.yellow}🧠 Installing Skills Globally (~/.gemini/config/skills/)...${colors.reset}`);
+    let installedGlobalCount = 0;
+    if (fs.existsSync(srcSkillsDir)) {
+      const skills = fs.readdirSync(srcSkillsDir, { withFileTypes: true });
+      for (const skill of skills) {
+        if (skill.isDirectory()) {
+          const srcSkillPath = path.join(srcSkillsDir, skill.name);
+          const destSkillPath = path.join(globalSkillsDir, skill.name);
+          copyDirRecursive(srcSkillPath, destSkillPath);
+          installedGlobalCount++;
+        }
+      }
+      console.log(`  ${colors.green}✓ ${installedGlobalCount} Skills installed globally.${colors.reset}`);
+    }
+
+    console.log(`\n${colors.yellow}🛡️ Registering Antigravity Privacy Hook...${colors.reset}`);
+    setupAntigravityHooksConfig(homeDir);
   }
 
-  if (options.project !== false) {
+  if (installProject) {
     console.log(`\n${colors.yellow}🎯 Syncing Skills to Local Workspace (${localAgentsSkillsDir})...${colors.reset}`);
     let installedProjectCount = 0;
     if (fs.existsSync(srcSkillsDir)) {
@@ -218,24 +224,24 @@ export async function installSuperpowers(options: InstallOptions = {}) {
       }
       console.log(`  ${colors.green}✓ ${installedProjectCount} Skills synced to workspace .agents/skills/!${colors.reset}`);
     }
+
+    console.log(`\n${colors.yellow}🛡️ Installing Project Privacy Hook...${colors.reset}`);
+    setupGitPrePushHook(currentDir);
   }
 
-  console.log(`\n${colors.yellow}🛡️ Installing Privacy & Path Dynamizer Hooks...${colors.reset}`);
-  setupGitPrePushHook(currentDir);
-  setupAntigravityHooksConfig(homeDir);
-
   console.log(`\n${colors.green}${colors.bright}🎉 Antigravity Superpowers & Specialized Division Skills installed successfully!${colors.reset}`);
-  console.log(`${colors.cyan}All 91+ skills, protocols, and privacy hooks are active.${colors.reset}\n`);
+  console.log(`${colors.cyan}Selected skills, protocols, and privacy hooks are active.${colors.reset}\n`);
 }
 
 if (import.meta.main) {
   const args = process.argv.slice(2);
   const isGlobal = args.includes("--global");
   const isProject = args.includes("--project");
+  const hasExplicitScope = isGlobal || isProject;
 
   installSuperpowers({
-    global: isGlobal || (!isGlobal && !isProject),
-    project: true,
+    global: hasExplicitScope ? isGlobal : true,
+    project: hasExplicitScope ? isProject : true,
   }).catch((err) => {
     console.error(`${colors.red}❌ Installation failed:${colors.reset}`, err);
     process.exit(1);
