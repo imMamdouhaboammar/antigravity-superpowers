@@ -6,6 +6,11 @@ import os from "node:os";
 import { installSuperpowers } from "../install.ts";
 import { scanAndDynamizePaths } from "../scripts/privacy_path_dynamizer.ts";
 import { routeTask } from "../src/routing/router.ts";
+import { detectInstalledAgents, getAllAdapters } from "../src/adapters/index.ts";
+import { generateSkillsManifest } from "../scripts/generate_manifest.ts";
+import skillsHandler from "../api/skills.ts";
+import manifestHandler from "../api/manifest.ts";
+import installHandler from "../api/install.ts";
 
 const colors = {
   reset: "\x1b[0m",
@@ -20,7 +25,7 @@ const colors = {
 };
 
 function printBanner() {
-  console.log(`\n${colors.cyan}${colors.bright}Antigravity Superpowers${colors.reset}\n${colors.yellow}Autonomous Superpowers & Specialized Division Skills for Antigravity${colors.reset}\n`);
+  console.log(`\n${colors.cyan}${colors.bright}Antigravity Superpowers${colors.reset}\n${colors.yellow}Autonomous Superpowers & Specialized Division Skills for AI Agents${colors.reset}\n`);
 }
 
 export function inspectInstallation(homeDir = os.homedir()) {
@@ -100,12 +105,90 @@ function listSkills() {
   console.log(`${colors.green}Total skills: ${skills.length}${colors.reset}\n`);
 }
 
+function listAgents() {
+  console.log(`${colors.cyan}${colors.bright}Supported AI Agent Adapters & Local Status${colors.reset}\n`);
+  const detections = detectInstalledAgents();
+
+  for (const item of detections) {
+    const statusIcon = item.detection.detected ? `${colors.green}✓ Detected${colors.reset}` : `${colors.dim}○ Supported${colors.reset}`;
+    console.log(`  ${colors.bright}${item.adapter.displayName}${colors.reset} [${item.adapter.name}]`);
+    console.log(`    Status: ${statusIcon}`);
+    if (item.detection.details) console.log(`    Details: ${item.detection.details}`);
+    if (item.detection.globalPath) console.log(`    Global: ${item.detection.globalPath}`);
+    if (item.detection.projectPath) console.log(`    Project: ${item.detection.projectPath}`);
+    console.log();
+  }
+
+  console.log(`Install to any agent using: ${colors.cyan}antigravity-superpowers install --agent <name>${colors.reset}`);
+  console.log(`Install to all agents using: ${colors.cyan}antigravity-superpowers install --all-agents${colors.reset}\n`);
+}
+
 function printRoutingDecision(task: string) {
   const decision = routeTask(task);
   console.log(`${colors.cyan}Routing decision${colors.reset}`);
   console.log(`  Complexity: ${decision.complexity}`);
   console.log(`  Skills: ${decision.skills.length ? decision.skills.join(", ") : "none"}`);
   for (const reason of decision.reasons) console.log(`  - ${reason}`);
+}
+
+function exportBrewFormula() {
+  const rootDir = path.resolve(import.meta.dir, "..");
+  const formulaPath = path.join(rootDir, "Formula", "antigravity-superpowers.rb");
+  if (fs.existsSync(formulaPath)) {
+    console.log(fs.readFileSync(formulaPath, "utf-8"));
+  } else {
+    console.error(`${colors.red}Formula file not found at ${formulaPath}${colors.reset}`);
+  }
+}
+
+function exportManifest() {
+  const rootDir = path.resolve(import.meta.dir, "..");
+  const manifest = generateSkillsManifest(rootDir);
+  console.log(JSON.stringify(manifest, null, 2));
+}
+
+async function startServer(port = 3000) {
+  const rootDir = path.resolve(import.meta.dir, "..");
+  const publicDir = path.join(rootDir, "public");
+
+  console.log(`${colors.cyan}${colors.bright}⚡ Starting Antigravity Superpowers & Skills.sh Catalog Server on http://localhost:${port}...${colors.reset}`);
+
+  Bun.serve({
+    port,
+    async fetch(req) {
+      const url = new URL(req.url);
+
+      if (url.pathname.startsWith("/api/skills")) {
+        return skillsHandler(req);
+      }
+      if (url.pathname === "/api/manifest" || url.pathname === "/skills.json") {
+        return manifestHandler(req);
+      }
+      if (url.pathname === "/api/install" || url.pathname === "/install.sh") {
+        return installHandler(req);
+      }
+
+      // Serve static files from public/
+      let filePath = path.join(publicDir, url.pathname === "/" ? "index.html" : url.pathname);
+      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+        const ext = path.extname(filePath);
+        const mimeTypes: Record<string, string> = {
+          ".html": "text/html",
+          ".css": "text/css",
+          ".js": "application/javascript",
+          ".json": "application/json",
+          ".svg": "image/svg+xml",
+          ".png": "image/png",
+        };
+        const contentType = mimeTypes[ext] || "text/plain";
+        return new Response(fs.readFileSync(filePath), {
+          headers: { "Content-Type": contentType },
+        });
+      }
+
+      return new Response("Not Found", { status: 404 });
+    },
+  });
 }
 
 async function main() {
@@ -116,10 +199,22 @@ async function main() {
       const args = process.argv.slice(3);
       const isGlobal = args.includes("--global");
       const isProject = args.includes("--project");
+      const isAllAgents = args.includes("--all-agents") || args.includes("--all");
+      const isDryRun = args.includes("--dry-run");
+
+      const agentIdx = args.indexOf("--agent");
+      const agentList: string[] = [];
+      if (agentIdx >= 0 && args[agentIdx + 1]) {
+        agentList.push(...args[agentIdx + 1].split(","));
+      }
+
       const hasExplicitScope = isGlobal || isProject;
       await installSuperpowers({
         global: hasExplicitScope ? isGlobal : true,
         project: hasExplicitScope ? isProject : true,
+        allAgents: isAllAgents,
+        agents: agentList.length > 0 ? agentList : undefined,
+        dryRun: isDryRun,
       });
       break;
     }
@@ -130,6 +225,22 @@ async function main() {
     case "list":
       listSkills();
       break;
+    case "agents":
+      listAgents();
+      break;
+    case "export-brew":
+    case "brew":
+      exportBrewFormula();
+      break;
+    case "manifest":
+      exportManifest();
+      break;
+    case "serve": {
+      const portArg = process.argv[3];
+      const port = portArg ? parseInt(portArg, 10) : 3000;
+      await startServer(port);
+      break;
+    }
     case "route": {
       const task = process.argv.slice(3).join(" ").trim();
       if (!task) {
@@ -151,17 +262,26 @@ async function main() {
     }
     case "help":
     default:
-      console.log(`Usage: antigravity-superpowers [command]
+      console.log(`Usage: antigravity-superpowers [command] [options]
 
 Commands:
-  install [--global|--project]  Install globally, locally, or both when no scope is specified
+  install                      Install skills and plugins (global + project default)
+    --global                   Install only to global user configuration (~/.gemini/)
+    --project                  Install only to current workspace (.agents/skills/)
+    --all-agents               Install across all detected AI agents (Antigravity, Claude, Cursor, OpenCode, Windsurf, Cline)
+    --agent <name>             Install to a specific agent (e.g. claude, cursor, opencode, windsurf, cline)
+    --dry-run                  Preview operations without writing to disk
   verify                       Verify required plugins and baseline capabilities
   status                       Alias for verify
   list                         List available skills by division
-  route <task>                  Explain the minimal specialist workflow selected for a task
-  sanitize                      Replace exact local-home path prefixes with '~' and preserve surrounding text
-  check-privacy                 Check for hardcoded local user paths without modifying files (fails if issues found)
-  help                          Display this help message
+  agents                       List supported AI agent adapters and environment detection status
+  route <task>                 Explain the minimal specialist workflow selected for a task
+  manifest                     Export Skills.sh registry manifest (skills.json)
+  export-brew                  Export Homebrew Ruby formula
+  serve [port]                 Launch local web catalog explorer & API server (default: 3000)
+  sanitize                     Replace exact local-home path prefixes with '~' and preserve surrounding text
+  check-privacy                Check for hardcoded local user paths without modifying files
+  help                         Display this help message
 `);
       break;
   }

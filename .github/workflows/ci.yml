@@ -31,6 +31,9 @@ jobs:
       - name: Run tests
         run: bun test
 
+      - name: Check Skills.sh manifest
+        run: bun run check:manifest
+
       - name: Check skill mirror
         run: bun run check:skill-mirror
 

@@ -2,12 +2,17 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { randomUUID } from "node:crypto";
+import { installToAgents, type AgentType } from "./src/adapters/index.ts";
 
 export interface InstallOptions {
   global?: boolean;
   project?: boolean;
   targetDir?: string;
+  rootDir?: string;
   force?: boolean;
+  agents?: string[];
+  allAgents?: boolean;
+  dryRun?: boolean;
 }
 
 const colors = {
@@ -19,9 +24,11 @@ const colors = {
   red: "\x1b[31m",
 };
 
-function copyDirRecursive(src: string, dest: string) {
+function copyDirRecursive(src: string, dest: string, dryRun = false) {
   if (!fs.existsSync(src)) return;
-  fs.mkdirSync(dest, { recursive: true });
+  if (!dryRun) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
 
   const entries = fs.readdirSync(src, { withFileTypes: true });
   for (const entry of entries) {
@@ -29,9 +36,11 @@ function copyDirRecursive(src: string, dest: string) {
     const destPath = path.join(dest, entry.name);
 
     if (entry.isDirectory()) {
-      copyDirRecursive(srcPath, destPath);
+      copyDirRecursive(srcPath, destPath, dryRun);
     } else {
-      fs.copyFileSync(srcPath, destPath);
+      if (!dryRun) {
+        fs.copyFileSync(srcPath, destPath);
+      }
     }
   }
 }
@@ -162,7 +171,7 @@ export function setupAntigravityHooksConfig(homeDir: string) {
 }
 
 export async function installSuperpowers(options: InstallOptions = {}) {
-  const rootDir = path.resolve(__dirname);
+  const rootDir = path.resolve(options.rootDir || __dirname);
   const homeDir = os.homedir();
   const globalPluginsDir = path.join(homeDir, ".gemini", "config", "plugins");
   const globalSkillsDir = path.join(homeDir, ".gemini", "config", "skills");
@@ -171,7 +180,28 @@ export async function installSuperpowers(options: InstallOptions = {}) {
   const installGlobal = options.global !== false;
   const installProject = options.project !== false;
 
-  console.log(`${colors.cyan}${colors.bright}⚡ Antigravity Superpowers Installer v1.0.0${colors.reset}\n`);
+  console.log(`${colors.cyan}${colors.bright}⚡ Antigravity Superpowers Installer v1.1.0${colors.reset}\n`);
+
+  if (options.allAgents || (options.agents && options.agents.length > 0)) {
+    console.log(`${colors.yellow}🌐 Multi-Agent Adapter Mode Activated...${colors.reset}`);
+    const results = await installToAgents({
+      allAgents: options.allAgents,
+      agents: options.agents,
+      global: installGlobal,
+      project: installProject,
+      targetDir: currentDir,
+      rootDir,
+      dryRun: options.dryRun,
+      force: options.force,
+    });
+
+    for (const res of results) {
+      console.log(`  ${colors.green}✓ Agent Adapter [${res.displayName}]:${colors.reset} ${res.installedSkillsCount} skills configured.`);
+    }
+
+    console.log(`\n${colors.green}${colors.bright}🎉 Multi-Agent Superpowers installed successfully!${colors.reset}\n`);
+    return;
+  }
 
   const srcPluginsDir = path.join(rootDir, "plugins");
   const srcSkillsDir = path.join(rootDir, "skills");
@@ -184,7 +214,7 @@ export async function installSuperpowers(options: InstallOptions = {}) {
         if (plugin.isDirectory()) {
           const srcPluginPath = path.join(srcPluginsDir, plugin.name);
           const destPluginPath = path.join(globalPluginsDir, plugin.name);
-          copyDirRecursive(srcPluginPath, destPluginPath);
+          copyDirRecursive(srcPluginPath, destPluginPath, options.dryRun);
           console.log(`  ${colors.green}✓ Plugin installed:${colors.reset} ${plugin.name} -> ${destPluginPath}`);
         }
       }
@@ -198,7 +228,7 @@ export async function installSuperpowers(options: InstallOptions = {}) {
         if (skill.isDirectory()) {
           const srcSkillPath = path.join(srcSkillsDir, skill.name);
           const destSkillPath = path.join(globalSkillsDir, skill.name);
-          copyDirRecursive(srcSkillPath, destSkillPath);
+          copyDirRecursive(srcSkillPath, destSkillPath, options.dryRun);
           installedGlobalCount++;
         }
       }
@@ -206,7 +236,9 @@ export async function installSuperpowers(options: InstallOptions = {}) {
     }
 
     console.log(`\n${colors.yellow}🛡️ Registering Antigravity Privacy Hook...${colors.reset}`);
-    setupAntigravityHooksConfig(homeDir);
+    if (!options.dryRun) {
+      setupAntigravityHooksConfig(homeDir);
+    }
   }
 
   if (installProject) {
@@ -218,7 +250,7 @@ export async function installSuperpowers(options: InstallOptions = {}) {
         if (skill.isDirectory()) {
           const srcSkillPath = path.join(srcSkillsDir, skill.name);
           const destSkillPath = path.join(localAgentsSkillsDir, skill.name);
-          copyDirRecursive(srcSkillPath, destSkillPath);
+          copyDirRecursive(srcSkillPath, destSkillPath, options.dryRun);
           installedProjectCount++;
         }
       }
@@ -226,7 +258,9 @@ export async function installSuperpowers(options: InstallOptions = {}) {
     }
 
     console.log(`\n${colors.yellow}🛡️ Installing Project Privacy Hook...${colors.reset}`);
-    setupGitPrePushHook(currentDir);
+    if (!options.dryRun) {
+      setupGitPrePushHook(currentDir);
+    }
   }
 
   console.log(`\n${colors.green}${colors.bright}🎉 Antigravity Superpowers & Specialized Division Skills installed successfully!${colors.reset}`);
@@ -237,11 +271,23 @@ if (import.meta.main) {
   const args = process.argv.slice(2);
   const isGlobal = args.includes("--global");
   const isProject = args.includes("--project");
+  const isAllAgents = args.includes("--all-agents") || args.includes("--all");
+  const isDryRun = args.includes("--dry-run");
+
+  const agentIdx = args.indexOf("--agent");
+  const agentList: string[] = [];
+  if (agentIdx >= 0 && args[agentIdx + 1]) {
+    agentList.push(...args[agentIdx + 1].split(","));
+  }
+
   const hasExplicitScope = isGlobal || isProject;
 
   installSuperpowers({
     global: hasExplicitScope ? isGlobal : true,
     project: hasExplicitScope ? isProject : true,
+    allAgents: isAllAgents,
+    agents: agentList.length > 0 ? agentList : undefined,
+    dryRun: isDryRun,
   }).catch((err) => {
     console.error(`${colors.red}❌ Installation failed:${colors.reset}`, err);
     process.exit(1);

@@ -4,54 +4,118 @@
 
 # ⚡ Antigravity Superpowers
 
-> **Autonomous Superpowers & Specialized Division Skills for Google Antigravity, AGY 2.0, AGY IDE, and Gemini CLI.**
+> **Autonomous Superpowers & 91+ Specialized Division Skills for Google Antigravity, Claude Code, Cursor, OpenCode, Windsurf, Cline, and AI Agents.**
 
 [![npm version](https://img.shields.io/npm/v/@mamdouh-aboammar/antigravity-superpowers.svg?color=38bdf8&style=flat-square)](https://www.npmjs.com/package/@mamdouh-aboammar/antigravity-superpowers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Bun Native](https://img.shields.io/badge/Runtime-Bun-black?logo=bun&style=flat-square)](https://bun.sh)
-[![Skills Count](https://img.shields.io/badge/Skills-88%2B%20Specialized-brightgreen?style=flat-square)](#-specialized-divisions-matrix-88-skills)
-[![Auto-Injection](https://img.shields.io/badge/Auto--Injection-Zero--Prompt-orange?style=flat-square)](#zero-prompt-auto-injection)
-[![Privacy Shield](https://img.shields.io/badge/Privacy%20Shield-Pre--Push%20Dynamizer-success?style=flat-square)](#%EF%B8%8F-privacy--path-dynamizer-shield)
+[![Skills Count](https://img.shields.io/badge/Skills-91%20Specialized-brightgreen?style=flat-square)](#-specialized-divisions-matrix-91-skills)
+[![Skills.sh Registry](https://img.shields.io/badge/Skills.sh-Registry%20Ready-purple?style=flat-square)](#-skillssh--vercel-web-portal)
+[![Homebrew](https://img.shields.io/badge/Homebrew-Formula%20Available-orange?style=flat-square)](#-homebrew-distribution)
+[![Multi-Agent](https://img.shields.io/badge/Agents-7%2B%20Adapters-cyan?style=flat-square)](#-supported-ai-agents--adapters)
 
 </div>
 
 ---
 
 > [!IMPORTANT]
-> **Zero-Setup & Zero-Prompt Auto-Injection**: All 13 core protocols and 88+ specialized division skills are automatically loaded into your Antigravity environment. No manual slash commands or complex configuration needed—simply ask and Antigravity executes with full division capabilities.
+> **Zero-Setup & Zero-Prompt Auto-Injection**: All 13 core protocols and 91 specialized division skills are automatically loaded across your AI agent environments. No manual slash commands or complex configuration needed—simply ask and your AI agent executes with full division capabilities.
 
 ---
 
-## 🚀 Quick Start & Installation
+## 🚀 Multi-Channel Installation & Distributions
 
-Install the entire suite of **Antigravity Superpowers** and **88+ Specialized Division Skills** globally and locally in a single step:
+Install **Antigravity Superpowers** and **91 Specialized Division Skills** globally or locally via your preferred channel:
 
-### Option 1: One-Line Curl Installer (Recommended)
+### 1. One-Line Curl Installer (Recommended)
 
 ```bash
+# Standard install (Antigravity & local project)
 curl -fsSL https://raw.githubusercontent.com/imMamdouhaboammar/antigravity-superpowers/master/install.sh | bash
+
+# Install across all detected AI agents (Antigravity, Claude, Cursor, OpenCode, Windsurf, Cline)
+curl -fsSL https://raw.githubusercontent.com/imMamdouhaboammar/antigravity-superpowers/master/install.sh | bash -s -- --all-agents
 ```
 
-### Option 2: Via Bun / npx CLI
+### 2. Homebrew Distribution
 
 ```bash
-# Using Bun (Recommended)
-bunx @mamdouh-aboammar/antigravity-superpowers install
+# Tap and install via Homebrew
+brew tap imMamdouhaboammar/antigravity-superpowers https://github.com/imMamdouhaboammar/antigravity-superpowers.git
+brew install antigravity-superpowers
+
+# Activate across all agents
+antigravity-superpowers install --all-agents
+```
+
+### 3. Skills.sh Registry (All AI Tools)
+
+```bash
+# Add entire superpowers suite to any skills.sh-compatible agent
+npx skills add imMamdouhaboammar/antigravity-superpowers
+
+# Or install individual specialized skills
+npx skills add imMamdouhaboammar/antigravity-superpowers/engineering-software-architect
+npx skills add imMamdouhaboammar/antigravity-superpowers/security-appsec-engineer
+```
+
+### 4. Bun / npx CLI Package
+
+```bash
+# Using Bun (Fastest)
+bunx @mamdouh-aboammar/antigravity-superpowers install --all-agents
 
 # Using npx
-npx @mamdouh-aboammar/antigravity-superpowers install
+npx @mamdouh-aboammar/antigravity-superpowers install --all-agents
 ```
 
-### Option 3: Manual Clone & Install
+### 5. Git Clone & Local Development
 
 ```bash
 git clone https://github.com/imMamdouhaboammar/antigravity-superpowers.git
 cd antigravity-superpowers
-bun run install.ts
+bun install
+bun run install.ts --all-agents
 ```
 
-> [!TIP]
-> After running the installer, run `bun run verify` (or `antigravity-superpowers verify`) to confirm that all 3 plugins and 88+ division skills are active in `~/.gemini/config/skills/`.
+---
+
+## 🤖 Supported AI Agents & Adapters
+
+Antigravity Superpowers includes native configuration adapters for all major agent harnesses:
+
+| Agent / IDE | Global Path | Project Workspace | Features |
+|---|---|---|---|
+| **Google Antigravity & Gemini CLI** | `~/.gemini/config/skills/` | `.agents/skills/` | Plugins, `PreToolUse` privacy hook, full AST routing |
+| **Anthropic Claude Code** | `~/.claude/skills/` | `.claude/skills/`, `CLAUDE.md` | Core instructions injected into `CLAUDE.md` |
+| **Cursor IDE** | `~/.cursor/skills/` | `.cursor/rules/`, `.cursorrules` | `.cursor/rules/antigravity-superpowers.mdc` rule injection |
+| **OpenCode AI** | `~/.config/opencode/skills/` | `.opencode/skills/` | Native `opencode.json` & skill mirror integration |
+| **Codeium Windsurf** | `~/.codeium/windsurf/` | `.windsurfrules`, `.windsurf/` | Cascade-ready superpowers rule block |
+| **Cline & Roo-Code** | `~/.cline/skills/` | `.clinerules`, `.roomodes` | Autonomous task mode prompt integration |
+| **Universal & Copilot** | `~/.agents/skills/` | `.agents/skills/`, `AGENTS.md` | `.github/copilot-instructions.md` & `AGENTS.md` |
+
+Inspect local agent detection anytime:
+```bash
+antigravity-superpowers agents
+```
+
+---
+
+## 🌐 Skills.sh & Vercel Web Portal
+
+This repository is ready for immediate deployment on **Vercel** as an interactive web catalog and serverless API:
+
+- **Web Explorer UI**: Browse, search, and inspect all 91 skills with live markdown rendering at `public/index.html`.
+- **Serverless API**:
+  - `GET /api/skills`: Full skills index and search (`?q=...&category=...`).
+  - `GET /api/skill/:name`: Individual skill JSON and raw markdown (`?raw=true`).
+  - `GET /skills.json`: Standardized Skills.sh registry manifest.
+  - `GET /install.sh`: Dynamic bash installer endpoint.
+- **Run Locally**:
+```bash
+bun run serve 3000
+# Open http://localhost:3000
+```
 
 ---
 
@@ -82,15 +146,10 @@ Antigravity Superpowers includes an automatic **Privacy Path Dynamizer & Git Pre
                   +----------------------------------------------+
 ```
 
-### Privacy Features
-
-- **Automatic Pre-Push Interception**: Installs `.git/hooks/pre-push` into target projects.
-- **Dynamic Path Conversion**: Converts absolute user paths into cross-platform environment expressions (`os.homedir()`, `process.env.HOME`, `"$HOME"`, `~`).
-- **Antigravity Hook Registration**: Integrates into `~/.gemini/config/hooks.json` on `PreToolUse` and `SessionStart`.
-- **Audit & Sanitize Commands**:
+### Privacy Audit & Sanitize
 
 ```bash
-# Audit repository for hardcoded user paths
+# Check repository for hardcoded user paths
 bun run bin/cli.ts check-privacy
 
 # Dynamize and sanitize all local user paths
@@ -111,7 +170,7 @@ The `antigravity-superpowers` core plugin codifies 13 binding execution rules:
 
 | # | Protocol | Key Capability |
 |---|---|---|
-| **1** | **Mandatory Auto-Injection & Awareness** | Scans and auto-injects all 88+ skills, MCP tools, and subagents on every prompt without manual commands. |
+| **1** | **Mandatory Auto-Injection & Awareness** | Scans and auto-injects all 91+ skills, MCP tools, and subagents on every prompt without manual commands. |
 | **2** | **Predictive Parallel Simulation** | Dispatches subagents concurrently (`invoke_subagent`) to audit risks, evaluate edge cases, and run parallel tests. |
 | **3** | **Omniscient Codebase Telepathy** | AST context mapping, dependency inspection (`bun.lock`), and schema-first verification before touching code. |
 | **4** | **Intent-to-System Mapping** | Generates production-grade, type-safe control flows directly from high-level user specifications. |
@@ -127,16 +186,16 @@ The `antigravity-superpowers` core plugin codifies 13 binding execution rules:
 
 ---
 
-## 🎯 Specialized Divisions Matrix (88 Skills)
+## 🎯 Specialized Divisions Matrix (91 Skills)
 
 ### 💻 Engineering Division (57 Skills)
 
-- **Software Architecture**: `engineering-software-architect`, `engineering-backend-architect`, `engineering-frontend-developer`, `engineering-senior-developer`, `engineering-code-reviewer`, `engineering-minimal-change-engineer`.
-- **AI, ML & RAG**: `engineering-ai-engineer`, `engineering-prompt-engineer`, `engineering-rag-pipeline-engineer`, `engineering-llm-post-training-engineer`, `engineering-multi-agent-systems-architect`, `engineering-ai-data-remediation-engineer`.
-- **Infrastructure & DevOps**: `engineering-devops-automator`, `engineering-sre`, `engineering-incident-response-commander`, `engineering-finops-engineer`, `engineering-identity-access-engineer`, `engineering-privacy-engineer`.
-- **Database & Search**: `engineering-database-optimizer`, `engineering-database-reliability-engineer`, `engineering-search-relevance-engineer`, `engineering-gaussdb-expert`, `engineering-postgresql-optimization`.
+- **Software Architecture**: `engineering-software-architect`, `engineering-backend-architect`, `engineering-frontend-developer`, `engineering-senior-developer`, `engineering-code-reviewer`, `engineering-minimal-change-engineer`, `engineering-codebase-onboarding-engineer`.
+- **AI, ML & RAG**: `engineering-ai-engineer`, `engineering-prompt-engineer`, `engineering-rag-pipeline-engineer`, `engineering-llm-post-training-engineer`, `engineering-multi-agent-systems-architect`, `engineering-ai-data-remediation-engineer`, `engineering-voice-ai-integration-engineer`.
+- **Infrastructure & DevOps**: `engineering-devops-automator`, `engineering-sre`, `engineering-incident-response-commander`, `engineering-finops-engineer`, `engineering-identity-access-engineer`, `engineering-privacy-engineer`, `engineering-network-engineer`.
+- **Database & Search**: `engineering-database-optimizer`, `engineering-database-reliability-engineer`, `engineering-search-relevance-engineer`, `engineering-gaussdb-expert`, `engineering-data-engineer`, `engineering-data-visualization-engineer`.
 - **Mobile, Desktop & IoT**: `engineering-mobile-app-builder`, `engineering-mobile-release-engineer`, `engineering-desktop-app-engineer`, `engineering-iot-fleet-engineer`, `engineering-embedded-firmware-engineer`.
-- **Specialized Systems**: `engineering-api-platform-engineer`, `engineering-payments-billing-engineer`, `engineering-realtime-collaboration-engineer`, `engineering-video-streaming-engineer`, `engineering-webassembly-engineer`, `engineering-solidity-smart-contract-engineer`, `engineering-git-workflow-master`, `engineering-cms-developer`, `engineering-filament-optimization-specialist`, `engineering-drupal-performance`, `engineering-drupal-shopping-cart`, `engineering-wordpress-performance`, `engineering-wordpress-shopping-cart`, `engineering-wechat-mini-program-developer`, `engineering-feishu-integration-developer`, `engineering-orgscript-engineer`, `engineering-email-intelligence-engineer`, `engineering-uswds-developer`, `engineering-section-508-specialist`, `engineering-i18n-engineer`, `engineering-it-service-manager`.
+- **Specialized Systems**: `engineering-api-platform-engineer`, `engineering-payments-billing-engineer`, `engineering-realtime-collaboration-engineer`, `engineering-video-streaming-engineer`, `engineering-webassembly-engineer`, `engineering-solidity-smart-contract-engineer`, `engineering-git-workflow-master`, `engineering-rust-refactoring-specialist`, `engineering-rapid-prototyper`, `engineering-technical-writer`, `engineering-cms-developer`, `engineering-filament-optimization-specialist`, `engineering-drupal-performance`, `engineering-drupal-shopping-cart`, `engineering-wordpress-performance`, `engineering-wordpress-shopping-cart`, `engineering-wechat-mini-program-developer`, `engineering-feishu-integration-developer`, `engineering-orgscript-engineer`, `engineering-email-intelligence-engineer`, `engineering-uswds-developer`, `engineering-section-508-specialist`, `engineering-i18n-engineer`, `engineering-it-service-manager`.
 
 ### 🛡️ Security Division (12 Skills)
 
@@ -150,55 +209,51 @@ The `antigravity-superpowers` core plugin codifies 13 binding execution rules:
 
 - `design-ui-designer`, `design-ux-architect`, `design-ux-researcher`, `design-ui-finish-gate-reviewer`, `design-brand-guardian`, `design-image-prompt-engineer`, `design-inclusive-visuals-specialist`, `design-persona-walkthrough`, `design-visual-storyteller`, `design-whimsy-injector`.
 
----
+### 🧭 Core & Guides (3 Skills)
 
-## 📊 Repository Insights & Stats
-
-<div align="center">
-
-<a href="https://github.com/anuraghazra/github-readme-stats">
-  <img align="center" src="https://github-readme-stats.vercel.app/api/pin/?username=imMamdouhaboammar&repo=antigravity-superpowers&theme=dark&border_color=38bdf8&bg_color=0f172a&title_color=38bdf8&text_color=94a3b8" alt="Repository Stats Card"/>
-</a>
-
-<br/><br/>
-
-<a href="https://github.com/anuraghazra/github-readme-stats">
-  <img align="center" src="https://github-readme-stats.vercel.app/api/top-langs/?username=imMamdouhaboammar&repo=antigravity-superpowers&theme=dark&layout=compact&border_color=818cf8&bg_color=0f172a&title_color=818cf8&text_color=94a3b8" alt="Top Languages Card"/>
-</a>
-
-</div>
+- `antigravity-superpowers`, `antigravity-guide`, `google-antigravity-sdk`.
 
 ---
 
 ## 🛠️ CLI Reference
 
-The module includes the `antigravity-superpowers` command-line executable:
+The module includes the `antigravity-superpowers` / `agy-superpowers` CLI:
 
 ```bash
-# Install plugins, skills, and privacy hooks
-bun run bin/cli.ts install
+# Install to default scopes (global Antigravity + local project)
+antigravity-superpowers install
+
+# Install only globally or only to project workspace
+antigravity-superpowers install --global
+antigravity-superpowers install --project
+
+# Install across all supported AI agents
+antigravity-superpowers install --all-agents
+
+# Install to a specific agent (e.g. claude, cursor, opencode, windsurf, cline)
+antigravity-superpowers install --agent cursor
+
+# List supported AI agents and their local detection status
+antigravity-superpowers agents
 
 # Verify system health and active skills
-bun run bin/cli.ts verify
+antigravity-superpowers verify
 
-# List all available skills grouped by division
-bun run bin/cli.ts list
+# List all 91 skills grouped by division
+antigravity-superpowers list
 
-# Sanitize hardcoded paths across current repository
-bun run bin/cli.ts sanitize
+# Route a task to the right specialized division
+antigravity-superpowers route "Debug failing API test"
 
-# Check for hardcoded local user paths (pre-push check)
-bun run bin/cli.ts check-privacy
+# Export Skills.sh manifest (skills.json)
+antigravity-superpowers manifest
+
+# Export Homebrew formula
+antigravity-superpowers export-brew
+
+# Start local web catalog explorer & API server
+antigravity-superpowers serve 3000
 ```
-
----
-
-## 🔒 Security Best Practices
-
-> [!SECURITY]
-> - **Zero Postinstall Risk**: `.npmrc` enforces `ignore-scripts=true` and `allow-git=none` by default.
-> - **Provenance Attestations**: Releases are published with npm provenance attestations.
-> - **Zero Leaks Guarantee**: Pre-push hooks sanitize absolute machine paths and sensitive user tokens automatically.
 
 ---
 
