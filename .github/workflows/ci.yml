@@ -31,6 +31,9 @@ jobs:
       - name: Run tests
         run: bun test
 
+      - name: Check skill mirror
+        run: bun run check:skill-mirror
+
       - name: Check privacy paths
         run: bun run bin/cli.ts check-privacy
 
