@@ -8,6 +8,7 @@ export interface SkillEntry {
   triggers?: string[];
   path: string;
   rawUrl: string;
+  content?: string;
 }
 
 export interface SkillsManifest {
@@ -81,9 +82,10 @@ export function generateSkillsManifest(rootDir = path.resolve(__dirname, "..")):
     const skillPath = path.join(skillsDir, entry.name, "SKILL.md");
     let description = "Specialized AI division skill";
     let triggers: string[] | undefined;
+    let content = "";
 
     if (fs.existsSync(skillPath)) {
-      const content = fs.readFileSync(skillPath, "utf-8");
+      content = fs.readFileSync(skillPath, "utf-8");
       const parsed = parseFrontmatter(content);
       if (parsed.description) description = parsed.description;
       if (parsed.triggers) triggers = parsed.triggers;
@@ -99,6 +101,7 @@ export function generateSkillsManifest(rootDir = path.resolve(__dirname, "..")):
       triggers,
       path: `skills/${entry.name}/SKILL.md`,
       rawUrl: `https://raw.githubusercontent.com/imMamdouhaboammar/antigravity-superpowers/master/skills/${entry.name}/SKILL.md`,
+      content,
     });
   }
 
@@ -119,8 +122,26 @@ export function generateSkillsManifest(rootDir = path.resolve(__dirname, "..")):
 if (import.meta.main) {
   const rootDir = path.resolve(__dirname, "..");
   const manifest = generateSkillsManifest(rootDir);
-  const targetPath = path.join(rootDir, "skills.json");
+  const jsonContent = JSON.stringify(manifest, null, 2) + "\n";
 
-  fs.writeFileSync(targetPath, JSON.stringify(manifest, null, 2) + "\n", "utf-8");
-  console.log(`✓ skills.json generated successfully with ${manifest.skillsCount} skills!`);
+  // Root skills.json
+  fs.writeFileSync(path.join(rootDir, "skills.json"), jsonContent, "utf-8");
+
+  // public/skills.json
+  const publicDir = path.join(rootDir, "public");
+  fs.mkdirSync(publicDir, { recursive: true });
+  fs.writeFileSync(path.join(publicDir, "skills.json"), jsonContent, "utf-8");
+
+  // public/install.sh
+  const installShSrc = path.join(rootDir, "install.sh");
+  if (fs.existsSync(installShSrc)) {
+    fs.copyFileSync(installShSrc, path.join(publicDir, "install.sh"));
+  }
+
+  // api/skills_manifest.json (bundled for serverless functions)
+  const apiDir = path.join(rootDir, "api");
+  fs.mkdirSync(apiDir, { recursive: true });
+  fs.writeFileSync(path.join(apiDir, "skills_manifest.json"), jsonContent, "utf-8");
+
+  console.log(`✓ skills.json generated successfully across root, public, and api with ${manifest.skillsCount} skills!`);
 }

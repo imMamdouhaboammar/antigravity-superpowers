@@ -1,6 +1,8 @@
-import fs from "node:fs";
-import path from "node:path";
-import { generateSkillsManifest } from "../scripts/generate_manifest.ts";
+import manifestData from "./skills_manifest.json";
+
+export const config = {
+  runtime: "edge",
+};
 
 export default async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
@@ -9,8 +11,22 @@ export default async function handler(req: Request): Promise<Response> {
   const category = (url.searchParams.get("category") || "").trim();
   const raw = url.searchParams.get("raw") === "true";
 
-  const rootDir = path.resolve(__dirname, "..");
-  const manifest = generateSkillsManifest(rootDir);
+  const manifest = manifestData as {
+    name: string;
+    version: string;
+    description: string;
+    skillsCount: number;
+    categories: Record<string, number>;
+    skills: Array<{
+      name: string;
+      description: string;
+      category: string;
+      triggers?: string[];
+      path: string;
+      rawUrl: string;
+      content?: string;
+    }>;
+  };
 
   // Single skill requested
   if (name && name !== "skills" && name !== "api") {
@@ -22,11 +38,8 @@ export default async function handler(req: Request): Promise<Response> {
       });
     }
 
-    const fullSkillPath = path.join(rootDir, "skills", skill.name, "SKILL.md");
-    const markdown = fs.existsSync(fullSkillPath) ? fs.readFileSync(fullSkillPath, "utf-8") : "";
-
     if (raw) {
-      return new Response(markdown, {
+      return new Response(skill.content || "", {
         status: 200,
         headers: {
           "Content-Type": "text/markdown; charset=utf-8",
@@ -35,16 +48,10 @@ export default async function handler(req: Request): Promise<Response> {
       });
     }
 
-    return new Response(
-      JSON.stringify({
-        ...skill,
-        content: markdown,
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-      }
-    );
+    return new Response(JSON.stringify(skill), {
+      status: 200,
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    });
   }
 
   // Filter skills list

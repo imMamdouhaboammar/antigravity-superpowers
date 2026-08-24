@@ -1,11 +1,11 @@
-import path from "node:path";
-import { generateSkillsManifest } from "../scripts/generate_manifest.ts";
+import manifestData from "./skills_manifest.json";
+
+export const config = {
+  runtime: "edge",
+};
 
 export default async function handler(req: Request): Promise<Response> {
-  const rootDir = path.resolve(__dirname, "..");
-  const manifest = generateSkillsManifest(rootDir);
-
-  return new Response(JSON.stringify(manifest, null, 2), {
+  return new Response(JSON.stringify(manifestData, null, 2), {
     status: 200,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
