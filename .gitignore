@@ -3,3 +3,14 @@ node_modules/
 dist/
 coverage/
 *.log
+.claude/
+.cursor/
+.cursorrules
+.cline/
+.clinerules
+.windsurf/
+.windsurfrules
+.opencode/
+CLAUDE.md
+AGENTS.md
+.github/copilot-instructions.md
